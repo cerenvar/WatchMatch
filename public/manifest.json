@@ -1,0 +1,22 @@
+{
+  "short_name": "WatchMatch",
+  "name": "WatchMatch - Ne İzlesek?",
+  "description": "Arkadaş gruplarında 'Ne İzlesek?' sorununu çözen tinder usulü film eşleştirme arenası.",
+  "icons": [
+    {
+      "src": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=192&h=192&fit=crop&q=80",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=512&h=512&fit=crop&q=80",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#030712",
+  "theme_color": "#0ea5e9",
+  "display": "standalone",
+  "orientation": "portrait"
+}
