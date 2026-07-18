@@ -73,7 +73,7 @@ export default function Dashboard() {
             WatchMatch Listem
           </h1>
           <p className="mt-2 text-gray-400 text-sm sm:text-base">
-            İzlemek istediğin filmleri listele, durumunu güncelle ve yerel hafızada sakla! 🍿
+            İzlemek istediğin filmleri listele, durumunu güncelle ve yerel hafızada sakla!
           </p>
         </header>
 
@@ -100,7 +100,7 @@ export default function Dashboard() {
 
             {movies.length === 0 ? (
               <div className="bg-gray-900 border border-dashed border-gray-800 rounded-2xl p-10 text-center text-gray-500">
-                <span className="text-4xl block mb-2">🎬</span>
+                
                 Listeniz henüz boş. Sol taraftaki formdan hemen ilk filminizi ekleyin!
               </div>
             ) : (

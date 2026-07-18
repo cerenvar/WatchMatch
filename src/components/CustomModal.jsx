@@ -1,18 +1,21 @@
 import React from 'react';
+import { AlertTriangle } from 'lucide-react';
 
 export default function CustomModal({ title, message, confirmText, cancelText, onConfirm, onCancel }) {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/85 backdrop-blur-md px-4 animate-fade-in">
-      <div className="bg-gray-900 border border-gray-850 p-6 rounded-3xl max-w-sm w-full text-center space-y-5 shadow-2xl shadow-purple-500/5 transform scale-100 transition-all border-sky-500/20">
-        <div className="text-4xl animate-pulse">🍿</div>
-        <h3 className="text-base font-extrabold text-white tracking-tight">{title || 'WatchMatch'}</h3>
-        <p className="text-xs text-gray-400 leading-relaxed font-medium">{message}</p>
-        <div className="flex gap-2.5 pt-2">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4 animate-fade-in">
+      <div className="bg-[#11151E] border border-[#1E2533] p-6 rounded-2xl max-w-sm w-full text-center space-y-5 shadow-2xl shadow-black/40">
+        <div className="w-12 h-12 rounded-full bg-[#F59E0B]/10 flex items-center justify-center mx-auto">
+          <AlertTriangle className="w-6 h-6 text-[#F59E0B]" />
+        </div>
+        <h3 className="text-lg font-bold text-[#F5F7FA]">{title || 'WatchMatch'}</h3>
+        <p className="text-sm text-[#9CA3AF] leading-relaxed">{message}</p>
+        <div className="flex gap-3 pt-2">
           {onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 py-2.5 rounded-xl bg-gray-950 hover:bg-gray-800 border border-gray-850 text-gray-400 font-bold text-xs transition cursor-pointer"
+              className="flex-1 py-3 rounded-xl bg-[#181D28] hover:bg-[#1E2533] border border-[#1E2533] text-[#9CA3AF] font-semibold text-sm transition cursor-pointer"
             >
               {cancelText || 'İptal'}
             </button>
@@ -20,7 +23,7 @@ export default function CustomModal({ title, message, confirmText, cancelText, o
           <button
             type="button"
             onClick={onConfirm}
-            className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 via-purple-500 to-pink-500 hover:from-sky-600 hover:via-purple-600 hover:to-pink-600 text-white font-black text-xs transition cursor-pointer shadow-lg shadow-purple-500/10"
+            className="flex-1 py-3 rounded-xl bg-[#bd3191] hover:bg-[#7d0d5a] text-white font-bold text-sm transition cursor-pointer"
           >
             {confirmText || 'Tamam'}
           </button>

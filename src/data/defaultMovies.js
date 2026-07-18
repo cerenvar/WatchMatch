@@ -2,6 +2,9 @@ export const defaultMovies = [
   {
     id: "1",
     title: "Interstellar",
+    year: 2014,
+    director: "Christopher Nolan",
+    cast: "Matthew McConaughey, Anne Hathaway",
     genre: "Bilim Kurgu",
     rating: "8.7",
     note: "İnsanlığın geleceği tehlikedeyken, bir grup astronot yaşanabilir yeni bir gezegen bulmak için solucan deliğinden geçer.",
@@ -14,6 +17,9 @@ export const defaultMovies = [
   {
     id: "2",
     title: "Inception",
+    year: 2010,
+    director: "Christopher Nolan",
+    cast: "Leonardo DiCaprio, Joseph Gordon-Levitt",
     genre: "Aksiyon",
     rating: "8.8",
     note: "Zihin hırsızlığı konusunda uzmanlaşmış bir casus, bu kez bir fikri çalmak yerine bir hedefin zihnine yeni bir fikir yerleştirmekle görevlendirilir.",
@@ -26,6 +32,9 @@ export const defaultMovies = [
   {
     id: "3",
     title: "Spirited Away",
+    year: 2020,
+    director: "Bilinmiyor",
+    cast: "Bilinmiyor",
     genre: "Animasyon",
     rating: "8.6",
     note: "Anne babası domuza dönüşen küçük Chihiro, ruhların dünyasında hayatta kalmak ve ailesini kurtarmak zorundadır.",
@@ -38,6 +47,9 @@ export const defaultMovies = [
   {
     id: "4",
     title: "The Dark Knight",
+    year: 2008,
+    director: "Christopher Nolan",
+    cast: "Christian Bale, Heath Ledger",
     genre: "Aksiyon",
     rating: "9.0",
     note: "Batman, Gotham'ı kaosa sürüklemek isteyen Joker adındaki gizemli ve sadist bir suçluyla karşı karşıya gelir.",
@@ -50,6 +62,9 @@ export const defaultMovies = [
   {
     id: "5",
     title: "Parasite",
+    year: 2020,
+    director: "Bilinmiyor",
+    cast: "Bilinmiyor",
     genre: "Gerilim",
     rating: "8.5",
     note: "Fakir bir ailenin üyeleri, zengin bir ailenin evinde birer birer çalışmaya başlar ancak bu durum kanlı ve tuhaf olayları tetikler.",
@@ -62,6 +77,9 @@ export const defaultMovies = [
   {
     id: "6",
     title: "Dune: Part Two",
+    year: 2020,
+    director: "Bilinmiyor",
+    cast: "Bilinmiyor",
     genre: "Bilim Kurgu",
     rating: "8.6",
     note: "Paul Atreides, ailesini yok eden komploculardan intikam almak ve evrenin kaderini değiştirmek için Chani ve Fremenlerle birleşir.",
@@ -74,6 +92,9 @@ export const defaultMovies = [
   {
     id: "7",
     title: "Whiplash",
+    year: 2020,
+    director: "Bilinmiyor",
+    cast: "Bilinmiyor",
     genre: "Dram",
     rating: "8.5",
     note: "Genç ve hırslı bir davulcu, acımasız ve mükemmeliyetçi bir konservatuar eğitmeninin gözetiminde sınırlarını zorlar.",
@@ -86,6 +107,9 @@ export const defaultMovies = [
   {
     id: "8",
     title: "Kuru Otlar Üstüne",
+    year: 2020,
+    director: "Bilinmiyor",
+    cast: "Bilinmiyor",
     genre: "Dram",
     rating: "8.0",
     note: "Anadolu'nun ücra bir köyünde zorunlu görevini yapan resim öğretmeni Samet'in, meslektaşı Nuray ile yollarının kesişmesini anlatır.",
@@ -98,6 +122,9 @@ export const defaultMovies = [
   {
     id: "9",
     title: "Spider-Man: Into the Spider-Verse",
+    year: 2020,
+    director: "Bilinmiyor",
+    cast: "Bilinmiyor",
     genre: "Animasyon",
     rating: "8.4",
     note: "Genç Miles Morales, farklı boyutlardan gelen Örümcek Kahramanlarla birleşerek tüm boyutları tehdit eden bir tehlikeye karşı savaşır.",
@@ -110,6 +137,9 @@ export const defaultMovies = [
   {
     id: "10",
     title: "The Grand Budapest Hotel",
+    year: 2020,
+    director: "Bilinmiyor",
+    cast: "Bilinmiyor",
     genre: "Komedi",
     rating: "8.1",
     note: "Ünlü bir Avrupa otelinin konsiyerj görevlisi ve onun sadık lobici çocuğunun, paha biçilemez bir Rönesans tablosunun çalınması etrafındaki maceraları.",
@@ -122,6 +152,9 @@ export const defaultMovies = [
   {
     id: "11",
     title: "Get Out",
+    year: 2020,
+    director: "Bilinmiyor",
+    cast: "Bilinmiyor",
     genre: "Korku",
     rating: "7.8",
     note: "Genç bir siyahi adam, beyaz kız arkadaşının ailesini ziyarete gittiğinde, onların misafirperverliğinin altında yatan korkunç bir sırrı keşfeder.",
@@ -134,6 +167,9 @@ export const defaultMovies = [
   {
     id: "12",
     title: "G.O.R.A.",
+    year: 2020,
+    director: "Bilinmiyor",
+    cast: "Bilinmiyor",
     genre: "Komedi",
     rating: "8.0",
     note: "Halı tüccarı Arif, uzaylılar tarafından kaçırılarak G.O.R.A. gezegenine götürülür. Gezegeni kurtarıp dünyaya dönmeye çalışır.",
@@ -146,6 +182,9 @@ export const defaultMovies = [
   {
     id: "13",
     title: "Knives Out",
+    year: 2020,
+    director: "Bilinmiyor",
+    cast: "Bilinmiyor",
     genre: "Gizem",
     rating: "7.9",
     note: "Ünlü bir polisiye yazarının gizemli ölümünü araştırmak için işe alınan sıra dışı dedektif Benoit Blanc, yalanlarla dolu aileyi sorgular.",
@@ -158,6 +197,9 @@ export const defaultMovies = [
   {
     id: "14",
     title: "Ayla",
+    year: 2020,
+    director: "Bilinmiyor",
+    cast: "Bilinmiyor",
     genre: "Dram",
     rating: "8.3",
     note: "Kore Savaşı'nda görevli Süleyman Astsubay, savaş meydanında kimsesiz küçük bir Koreli kız bulur ve ona Ayla ismini vererek sahiplenir.",
@@ -170,6 +212,9 @@ export const defaultMovies = [
   {
     id: "15",
     title: "Pulp Fiction",
+    year: 1994,
+    director: "Quentin Tarantino",
+    cast: "John Travolta, Uma Thurman, Samuel L. Jackson",
     genre: "Suç",
     rating: "8.9",
     note: "İki tetikçi, bir boksör, bir gangsterin karısı ve iki lokanta soyguncusunun yolları ironik ve beklenmedik olaylar zinciriyle kesişir.",

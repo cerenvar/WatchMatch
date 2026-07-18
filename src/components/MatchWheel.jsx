@@ -1,128 +1,104 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, useAnimation } from 'framer-motion';
 
-export default function MatchWheel({ matchedMovies, onClose }) {
+export default function MatchWheel({ options, onSelect }) {
   const [isSpinning, setIsSpinning] = useState(false);
-  const [displayText, setDisplayText] = useState('Döndürmeye Hazır!');
-  const [finalChoice, setFinalChoice] = useState(null);
+  const controls = useAnimation();
+  const wheelRef = useRef(null);
 
-  const startSpin = () => {
-    if (matchedMovies.length === 0 || isSpinning) return;
+  const colors = [
+    '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6',
+    '#EC4899', '#14B8A6', '#F43F5E', '#84CC16', '#0EA5E9'
+  ];
 
+  const spinWheel = async () => {
+    if (isSpinning || options.length === 0) return;
     setIsSpinning(true);
-    setFinalChoice(null);
 
-    let counter = 0;
-    let speed = 40; // Initial speed in ms
-    const maxSpins = 30; // Number of items it cycles through before stopping
-    
-    const pickRandomSequence = () => {
-      const randomIndex = Math.floor(Math.random() * matchedMovies.length);
-      const tempMovie = matchedMovies[randomIndex];
-      setDisplayText(tempMovie.title);
-      
-      counter++;
-      
-      if (counter < maxSpins) {
-        // Slow down physics
-        if (counter > maxSpins * 0.7) {
-          speed += 40;
-        } else if (counter > maxSpins * 0.4) {
-          speed += 20;
-        }
-        setTimeout(pickRandomSequence, speed);
-      } else {
-        // Spin finished
-        setIsSpinning(false);
-        setFinalChoice(tempMovie);
-      }
-    };
+    const spinDuration = 4;
+    const spins = 5;
+    const extraDegrees = Math.floor(Math.random() * 360);
+    const totalRotation = spins * 360 + extraDegrees;
 
-    setTimeout(pickRandomSequence, speed);
+    await controls.start({
+      rotate: totalRotation,
+      transition: { duration: spinDuration, ease: "circOut" }
+    });
+
+    const sliceAngle = 360 / options.length;
+    const normalizedRotation = totalRotation % 360;
+    const selectedIndex = Math.floor((360 - normalizedRotation + (sliceAngle / 2)) % 360 / sliceAngle);
+
+    onSelect(options[selectedIndex]);
+    setIsSpinning(false);
   };
 
+  useEffect(() => {
+    controls.set({ rotate: 0 });
+  }, [options, controls]);
+
+  if (!options || options.length === 0) return null;
+
+  const sliceAngle = 360 / options.length;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-950/80 backdrop-blur-md transition-opacity">
-      <div className="relative w-full max-w-md bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden shadow-2xl p-6 text-center text-white flex flex-col items-center">
-        {/* Close Button */}
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-white transition text-xl cursor-pointer"
-          disabled={isSpinning}
-        >
-          ✕
-        </button>
-
-        {/* Header */}
-        <h3 className="text-xl font-bold bg-gradient-to-r from-sky-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">
-          🎲 Şanslı Seçici
-        </h3>
-        <p className="text-xs text-gray-400 mb-6">
-          Karar veremediyseniz, çarkı döndürün ve kadere bırakın!
-        </p>
-
-        {/* Slot Reel */}
-        <div className="w-full bg-gray-950 border border-gray-800 rounded-2xl p-8 mb-6 relative overflow-hidden flex items-center justify-center min-h-[140px] shadow-inner">
-          <div className="absolute top-0 bottom-0 left-0 right-0 pointer-events-none bg-gradient-to-b from-gray-950 via-transparent to-gray-950 opacity-90" />
-          
-          <div className={`transition-all duration-100 ${isSpinning ? 'scale-95 text-sky-400 blur-[0.5px]' : 'scale-105 text-white font-extrabold'}`}>
-            <span className="text-2xl tracking-tight block max-w-xs break-words">
-              {displayText}
-            </span>
-          </div>
-        </div>
-
-        {/* Final Selection Result Card */}
-        {finalChoice && (
-          <div className="w-full bg-gray-950 border border-emerald-500/20 rounded-2xl p-4 mb-6 flex gap-4 items-center text-left animate-fade-in">
-            <img 
-              src={finalChoice.poster} 
-              alt={finalChoice.title} 
-              className="w-16 h-24 object-cover rounded-lg border border-gray-800 shadow-md"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&auto=format&fit=crop&q=80";
-              }}
-            />
-            <div className="flex-1 min-w-0">
-              <span className="bg-emerald-500/10 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/20 mb-1 inline-block">
-                Kaderin Seçimi 🔮
-              </span>
-              <h4 className="font-extrabold text-sky-300 text-base truncate">{finalChoice.title}</h4>
-              <p className="text-[11px] text-gray-400 mt-1 line-clamp-2 leading-relaxed">
-                {finalChoice.note}
-              </p>
-              <div className="flex gap-2 items-center mt-2">
-                <span className="text-[10px] text-yellow-400 font-bold">⭐ {finalChoice.rating}</span>
-                <span className="text-[10px] text-gray-500">|</span>
-                <span className="text-[10px] text-gray-400">{finalChoice.genre}</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Spin Actions */}
-        <div className="w-full flex gap-3">
-          <button
-            onClick={startSpin}
-            disabled={isSpinning || matchedMovies.length === 0}
-            className={`flex-1 font-bold py-3 px-6 rounded-xl transition shadow-lg cursor-pointer ${
-              isSpinning 
-                ? 'bg-gray-850 text-gray-600 border border-gray-850'
-                : 'bg-gradient-to-r from-sky-500 to-purple-600 hover:from-sky-600 hover:to-purple-700 text-white shadow-sky-500/10'
-            }`}
-          >
-            {isSpinning ? 'Dönüyor...' : 'Zarları At 🎲'}
-          </button>
-          
-          <button
-            onClick={onClose}
-            disabled={isSpinning}
-            className="px-5 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold transition disabled:opacity-50 cursor-pointer"
-          >
-            Kapat
-          </button>
-        </div>
+    <div className="relative w-full aspect-square max-w-[320px] mx-auto">
+      {/* Pointer */}
+      <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 z-20 drop-shadow-xl">
+        <svg viewBox="0 0 24 24" fill="#F5F7FA" className="w-full h-full rotate-180">
+          <path d="M12 2L2 22h20L12 2z" />
+        </svg>
       </div>
+
+      {/* Wheel */}
+      <div className="w-full h-full rounded-full border-4 border-[#1E2533] bg-[#181D28] shadow-[0_0_40px_rgba(0,0,0,0.5)] overflow-hidden relative">
+        <motion.div
+          ref={wheelRef}
+          animate={controls}
+          className="w-full h-full relative"
+          style={{ transformOrigin: 'center center' }}
+        >
+          {options.map((option, index) => {
+            const rotation = index * sliceAngle;
+            return (
+              <div
+                key={index}
+                className="absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-1/2 origin-bottom flex flex-col items-center justify-start pt-4"
+                style={{
+                  transform: `rotate(${rotation}deg)`,
+                  backgroundColor: 'transparent'
+                }}
+              >
+                <div
+                  className="absolute inset-0 origin-bottom"
+                  style={{
+                    backgroundColor: colors[index % colors.length],
+                    transform: `skewX(${90 - sliceAngle}deg)`,
+                    transformOrigin: 'bottom left',
+                    opacity: 0.15,
+                    borderRight: '1px solid rgba(255,255,255,0.05)'
+                  }}
+                />
+                <span
+                  className="text-xs font-black text-[#F5F7FA] -rotate-90 origin-bottom whitespace-nowrap w-24 text-right truncate drop-shadow-md z-10"
+                  style={{ transform: `translateY(-50%) rotate(-90deg)` }}
+                >
+                  {option.title}
+                </span>
+              </div>
+            );
+          })}
+        </motion.div>
+      </div>
+
+      {/* Center Button */}
+      <button
+        onClick={spinWheel}
+        disabled={isSpinning}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-[#bd3191] hover:bg-[#7d0d5a] border-4 border-[#1E2533] rounded-full text-white font-black text-sm uppercase tracking-wider shadow-xl transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed z-20 flex items-center justify-center cursor-pointer"
+      >
+        ÇEVİR
+      </button>
     </div>
   );
 }

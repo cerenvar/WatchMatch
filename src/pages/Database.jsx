@@ -1,154 +1,145 @@
 import React, { useState } from 'react';
-import MovieForm from '../components/MovieForm';
+import { Plus, Search, Filter } from 'lucide-react';
 import MovieCard from '../components/MovieCard';
+import MovieForm from '../components/MovieForm';
 
-export default function Database({
-  movies,
-  onSubmitMovie,
-  onDeleteMovie,
-  editingMovie,
-  setEditingMovie,
-  resetToDefaults,
-  confirmAction
-}) {
+export default function Database({ movies, onSubmitMovie, onDeleteMovie, editingMovie, setEditingMovie, resetToDefaults, fetchFromTmdb, confirmAction }) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedGenre, setSelectedGenre] = useState('');
+  const [filterPlatform, setFilterPlatform] = useState('All');
+  const [filterGenre, setFilterGenre] = useState('All');
 
-  // Get list of unique genres in database to filter by
-  const uniqueGenres = Array.from(new Set(movies.map(m => m.genre)));
+  const platforms = ['All', ...new Set(movies.flatMap(m => m.platforms || []))];
+  const genres = ['All', ...new Set(movies.map(m => m.genre))];
 
-  // Filter movies based on search term and selected genre
-  const filteredMovies = movies.filter(movie => {
-    const matchesSearch = movie.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      movie.note?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesGenre = selectedGenre ? movie.genre === selectedGenre : true;
-    return matchesSearch && matchesGenre;
+  const filteredMovies = movies.filter(m => {
+    const matchesSearch = m.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesPlatform = filterPlatform === 'All' || (m.platforms && m.platforms.includes(filterPlatform));
+    const matchesGenre = filterGenre === 'All' || m.genre === filterGenre;
+    return matchesSearch && matchesPlatform && matchesGenre;
   });
 
   return (
-    <div className="max-w-6xl mx-auto my-6 text-white px-4">
-      {/* Header section */}
-      <div className="text-center mb-8">
-        <span className="text-5xl block mb-2">⚙️</span>
-        <h2 className="text-3xl font-black bg-gradient-to-r from-sky-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-          Film Kütüphanem (CRUD)
-        </h2>
-        <p className="text-xs text-gray-400 mt-1">
-          Eşleşme havuzundaki filmleri yönetin. Yeni film ekleyin, güncelleyin veya silin! 🍿
-        </p>
-      </div>
+    <div className="animate-fade-in px-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h2 className="text-2xl font-black text-[#F5F7FA] tracking-tight">Film Havuzu</h2>
+          <p className="text-sm text-[#9CA3AF] font-medium mt-1">
+            Toplam {movies.length} kayıtlı film/dizi bulunuyor
+          </p>
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => {
+              if (confirmAction) {
+                confirmAction("TMDb'den 300+ film çekmek istediğinize emin misiniz? (API anahtarınızın kayıtlı olması gerekir)", fetchFromTmdb, "Filmleri Çek");
+              } else {
+                fetchFromTmdb();
+              }
+            }}
+            className="bg-[#1E2533] hover:bg-[#283142] text-[#F5F7FA] border border-[#283142] px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 shadow-lg cursor-pointer"
+          >
+            TMDb'den Film Çek
+          </button>
+          
+          <button
+            onClick={() => {
+              if (confirmAction) {
+                confirmAction("Tüm filmleri silip varsayılan 15 filme dönmek istediğinize emin misiniz?", resetToDefaults, "Sıfırla");
+              } else {
+                resetToDefaults();
+              }
+            }}
+            className="bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/20 px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 shadow-lg cursor-pointer"
+          >
+            Sıfırla
+          </button>
 
-      {/* Bilgilendirme Kutusu */}
-      <div className="bg-sky-500/10 border border-sky-500/25 p-4 rounded-2xl mb-8 flex items-start gap-3 max-w-3xl mx-auto">
-        <span className="text-2xl shrink-0">💡</span>
-        <div className="text-xs text-sky-200 leading-relaxed text-left">
-          <span className="font-bold block text-sm text-sky-300 mb-0.5">Önemli Bilgi</span>
-          Burası sizin <strong>kişisel film listenizdir</strong>. Burada film eklemeniz veya silmeniz, arkadaşlarınızın telefonundaki film listelerini <strong>asla etkilemez veya bozmaz</strong>. Değişiklikler sadece sizin tarayıcınızda saklanır. Yanlışlıkla bir şeyi silerseniz veya karıştırırsanız, sol taraftaki <strong>"Örnek Filmleri Geri Yükle"</strong> butonuna basarak her şeyi ilk haline geri döndürebilirsiniz.
+          <button
+            onClick={() => document.getElementById('add-movie-form')?.scrollIntoView({ behavior: 'smooth' })}
+            className="bg-[#bd3191] hover:bg-[#7d0d5a] text-white px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 shadow-lg shadow-[#bd3191]/20 cursor-pointer"
+          >
+            <Plus className="w-5 h-5" />
+            Yeni Film Ekle
+          </button>
         </div>
       </div>
 
-      {/* Grid structure: Left form, Right list */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="bg-[#11151E]/60 backdrop-blur-md border border-[#bd3191]/15 p-4 rounded-2xl mb-8 flex flex-col md:flex-row gap-4 shadow-2xl">
+        <div className="flex-1 relative">
+          <Search className="w-5 h-5 text-[#4B5563] absolute left-4 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Film adı ile ara..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-11 pr-4 py-3 bg-[#11151E]/40 border border-[#1E2533]/60 rounded-xl focus:outline-none focus:border-[#bd3191] focus:ring-1 focus:ring-[#bd3191]/20 text-[#F5F7FA] placeholder-[#4B5563] transition text-sm"
+          />
+        </div>
+        
+        <div className="flex gap-4">
+          <div className="relative">
+            <Filter className="w-4 h-4 text-[#4B5563] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <select
+              value={filterPlatform}
+              onChange={(e) => setFilterPlatform(e.target.value)}
+              className="pl-9 pr-8 py-3 bg-[#11151E]/40 border border-[#1E2533]/60 rounded-xl focus:outline-none focus:border-[#bd3191] focus:ring-1 focus:ring-[#bd3191]/20 text-[#F5F7FA] appearance-none cursor-pointer transition text-sm font-medium min-w-[140px]"
+            >
+              {platforms.map(p => <option key={p} value={p} className="bg-[#181D28] text-white">{p === 'All' ? 'Tüm Platformlar' : p}</option>)}
+            </select>
+          </div>
 
-        {/* Left Side: Movie Form (Create/Update) */}
-        <div className="lg:col-span-1 space-y-4">
-          <div className="sticky top-24">
-            <MovieForm
-              onSubmit={onSubmitMovie}
-              editingMovie={editingMovie}
-              onCancel={() => setEditingMovie(null)}
+          <div className="relative">
+            <Filter className="w-4 h-4 text-[#4B5563] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <select
+              value={filterGenre}
+              onChange={(e) => setFilterGenre(e.target.value)}
+              className="pl-9 pr-8 py-3 bg-[#11151E]/40 border border-[#1E2533]/60 rounded-xl focus:outline-none focus:border-[#bd3191] focus:ring-1 focus:ring-[#bd3191]/20 text-[#F5F7FA] appearance-none cursor-pointer transition text-sm font-medium min-w-[140px]"
+            >
+              {genres.map(g => <option key={g} value={g} className="bg-[#181D28] text-white">{g === 'All' ? 'Tüm Türler' : g}</option>)}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {filteredMovies.length === 0 ? (
+        <div className="text-center py-20 bg-[#11151E]/60 backdrop-blur-md border border-[#bd3191]/15 rounded-2xl">
+          <Search className="w-12 h-12 text-[#4B5563] mx-auto mb-4" />
+          <p className="text-lg text-[#9CA3AF] font-medium">Arama kriterlerine uygun film bulunamadı.</p>
+          <button
+            onClick={() => { setSearchTerm(''); setFilterPlatform('All'); setFilterGenre('All'); }}
+            className="mt-4 text-[#bd3191] font-bold hover:underline"
+          >
+            Filtreleri Temizle
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 mb-12">
+          {filteredMovies.map(movie => (
+            <MovieCard
+              key={movie.id}
+              movie={movie}
+              onDelete={onDeleteMovie}
+              onEdit={(m) => {
+                setEditingMovie(m);
+                setTimeout(() => document.getElementById('add-movie-form')?.scrollIntoView({ behavior: 'smooth' }), 100);
+              }}
             />
-
-            {/* Seed restorer */}
-            <div className="mt-4 p-4 bg-gray-900 border border-gray-800 rounded-2xl text-center space-y-2">
-              <span className="text-[10px] text-gray-500 font-bold block uppercase tracking-wider">İlk Listeye Geri Dön 🧹</span>
-              <p className="text-[10px] text-gray-400">
-                Kendi eklediğiniz filmleri silip, uygulamanın önerdiği ilk 15 hazır filme geri dönmek isterseniz bu düğmeyi kullanabilirsiniz.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  confirmAction(
-                    "Eklediğiniz tüm filmler silinecek ve uygulamanın kendi hazır örnek filmleri geri yüklenecek. Devam etmek istiyor musunuz?",
-                    () => {
-                      resetToDefaults();
-                      setEditingMovie(null);
-                    },
-                    "Kütüphaneyi Sıfırla 🧹"
-                  );
-                }}
-                className="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 font-bold rounded-xl border border-purple-500/20 text-xs transition cursor-pointer"
-              >
-                🍿 Örnek Filmleri Geri Yükle
-              </button>
-            </div>
-          </div>
+          ))}
         </div>
-
-        {/* Right Side: List & Filters (Read/Delete) */}
-        <div className="lg:col-span-2 space-y-6">
-
-          {/* Search and Filters panel */}
-          <div className="bg-gray-900 border border-gray-800 p-4 rounded-2xl flex flex-col md:flex-row gap-4 items-center justify-between shadow-md">
-            <div className="w-full md:flex-1">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Film adı veya notlarda ara..."
-                className="w-full px-4 py-2 rounded-xl bg-gray-950 border border-gray-850 text-xs focus:outline-none focus:border-sky-500 text-white placeholder-gray-600 transition"
-              />
-            </div>
-
-            <div className="w-full md:w-48">
-              <select
-                value={selectedGenre}
-                onChange={(e) => setSelectedGenre(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-gray-950 border border-gray-850 text-xs focus:outline-none focus:border-sky-500 text-white transition text-gray-450"
-              >
-                <option value="">Tüm Türler</option>
-                {uniqueGenres.map(g => (
-                  <option key={g} value={g}>{g}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Database Counter */}
-          <div className="flex justify-between items-center px-2">
-            <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">
-              Toplam Film: {movies.length} {filteredMovies.length !== movies.length && `(Filtrelenmiş: ${filteredMovies.length})`}
-            </span>
-          </div>
-
-          {/* Grid listing */}
-          {filteredMovies.length === 0 ? (
-            <div className="bg-gray-900 border border-dashed border-gray-800 rounded-3xl p-16 text-center text-gray-500 shadow-md">
-              <span className="text-4xl block mb-2">🎬</span>
-              <p className="text-sm font-semibold">Aradığınız kriterlere uygun film bulunamadı.</p>
-              <p className="text-xs text-gray-600 mt-1">Arama kelimenizi temizleyin veya sol taraftan yenisini ekleyin.</p>
-              {(searchTerm || selectedGenre) && (
-                <button
-                  onClick={() => { setSearchTerm(''); setSelectedGenre(''); }}
-                  className="mt-4 text-xs font-bold text-sky-400 hover:underline"
-                >
-                  Filtreleri Temizle
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {filteredMovies.map((movie) => (
-                <MovieCard
-                  key={movie.id}
-                  movie={movie}
-                  onDelete={onDeleteMovie}
-                  onEdit={setEditingMovie}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+      )}
+      
+      {/* Movie Form */}
+      <div id="add-movie-form" className="mt-12 bg-[#11151E]/60 backdrop-blur-md border border-[#bd3191]/15 p-6 md:p-8 rounded-3xl shadow-2xl">
+        <h3 className="text-xl font-black text-[#F5F7FA] mb-6 flex items-center gap-2">
+          <Plus className="w-6 h-6 text-[#bd3191]" /> 
+          {editingMovie ? 'Filmi Düzenle' : 'Yeni Film Ekle'}
+        </h3>
+        <MovieForm 
+          onSubmit={onSubmitMovie} 
+          initialData={editingMovie} 
+          onCancel={editingMovie ? () => setEditingMovie(null) : undefined} 
+        />
       </div>
     </div>
   );

@@ -1,247 +1,162 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Heart, X as XIcon, Minus } from 'lucide-react';
+
 import SwipeCard from '../components/SwipeCard';
+import { HandHeart, Info } from 'lucide-react';
 
-export default function SwipeArena({
-  currentUser,
-  members,
-  roomMovies,
-  votes,
-  submitVote,
-  setPage,
-  leaveRoom
-}) {
+export default function SwipeArena({ roomMovies: movies, submitVote: onVote, votes, currentUser, setPage }) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [matchAlert, setMatchAlert] = useState(null); // { title: string, poster: string }
 
-  const currentMovie = roomMovies[currentIndex];
+  const [activities, setActivities] = useState([]);
+  const prevVotesRef = useRef(votes);
 
-  // Calculate voting progress for a user
-  const getUserProgress = (memberName) => {
-    const userVotes = votes[memberName] || {};
-    return Object.keys(userVotes).length;
-  };
-
-  // Check if everyone has finished swiping
-  const allFinished = members.length > 0 && members.every(member =>
-    getUserProgress(member.name) >= roomMovies.length
-  );
-
-  const handleVoteSubmit = (movieId, vote) => {
-    // 1. Submit the vote
-    submitVote(movieId, vote);
-
-    // 2. Check if this is a PERFECT MATCH (everyone has voted, and everyone voted 'like')
-    // Or if others haven't voted yet, check if everyone who voted so far voted 'like'.
-    // If it's a LIKE, and all other members who have already voted on this movie voted LIKE, and there's at least 2 members.
-    if (vote === 'like' && members.length > 1) {
-      let isPerfectSoFar = true;
-      let voteCountForMovie = 1; // current user liked it
-
-      members.forEach(m => {
-        if (m.name === currentUser.name) return;
-        const otherVotes = votes[m.name] || {};
-        const otherVote = otherVotes[movieId];
-
-        if (otherVote) {
-          voteCountForMovie++;
-          if (otherVote !== 'like') {
-            isPerfectSoFar = false;
+  useEffect(() => {
+    const prevVotes = prevVotesRef.current;
+    let newActivities = [];
+    
+    Object.keys(votes).forEach(userName => {
+      const userVotes = votes[userName] || {};
+      const prevUserVotes = prevVotes[userName] || {};
+      
+      Object.keys(userVotes).forEach(movieId => {
+        if (!prevUserVotes[movieId]) {
+          // New vote found!
+          // We don't show the user's own votes in the activity feed, unless we want to. Let's skip own votes.
+          if (userName !== currentUser?.name) {
+            newActivities.push({
+              id: Date.now() + Math.random(),
+              name: userName,
+              vote: userVotes[movieId]
+            });
           }
         }
       });
+    });
 
-      // If at least one other person has voted, and all votes are 'like', show a match alert!
-      if (isPerfectSoFar && voteCountForMovie === members.length) {
-        setMatchAlert({
-          title: currentMovie.title,
-          poster: currentMovie.poster
-        });
-
-        // Auto-close alert after 2.5 seconds
+    if (newActivities.length > 0) {
+      setActivities(prev => [...prev, ...newActivities].slice(-5)); // Keep only last 5
+      
+      // Auto remove after 4 seconds
+      newActivities.forEach(activity => {
         setTimeout(() => {
-          setMatchAlert(null);
-          advanceMovie();
-        }, 2500);
-        return; // Don't advance movie yet, let the alert play
-      }
+          setActivities(prev => prev.filter(a => a.id !== activity.id));
+        }, 4000);
+      });
     }
+    
+    prevVotesRef.current = votes;
+  }, [votes, currentUser]);
 
-    advanceMovie();
+  const renderVoteIcon = (vote) => {
+    if (vote === 'like') return <Heart className="w-4 h-4 text-[#22C55E] fill-current" />;
+    if (vote === 'dislike') return <XIcon className="w-4 h-4 text-[#EF4444]" />;
+    return <Minus className="w-4 h-4 text-[#3B82F6]" />;
   };
 
-  const advanceMovie = () => {
+  const handleVote = (movieId, vote) => {
+    onVote(movieId, vote);
     setCurrentIndex(prev => prev + 1);
   };
+  
+  const safeMovies = movies || [];
+  
+  if (safeMovies.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in text-center px-4">
+        <h2 className="text-2xl font-black text-[#F5F7FA] mb-4">Filmler Yükleniyor veya Bulunamadı</h2>
+        <button
+          onClick={() => setPage && setPage('lobby')}
+          className="bg-[#1E2533] hover:bg-[#2A3441] text-white font-bold py-3 px-8 rounded-xl transition"
+        >
+          Lobiye Dön
+        </button>
+      </div>
+    );
+  }
 
-  // Check if user has finished swiping
-  const isUserFinished = currentIndex >= roomMovies.length;
+  const currentMovie = safeMovies[currentIndex];
+
+  if (currentIndex >= safeMovies.length) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in text-center px-4">
+        <div className="w-20 h-20 bg-[#22C55E]/10 rounded-full flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(34,197,94,0.2)]">
+          <HandHeart className="w-10 h-10 text-[#22C55E]" />
+        </div>
+        <h2 className="text-3xl font-black text-[#F5F7FA] mb-4">Harika İş Çıkardın!</h2>
+        <p className="text-lg text-[#9CA3AF] font-medium max-w-2xl mb-8">
+          Şimdilik havuzdaki tüm filmleri değerlendirdin. Diğerlerinin de bitirmesini bekleyebilir veya sonuçlara göz atabilirsin.
+        </p>
+        <button
+          onClick={() => setPage && setPage('results')}
+          className="bg-[#bd3191] hover:bg-[#7d0d5a] text-white font-bold py-3 px-8 rounded-xl transition shadow-lg hover:shadow-[#bd3191]/50"
+        >
+          Sonuçları Gör
+        </button>
+      </div>
+    );
+  }
+
+  const progressPercentage = ((currentIndex) / safeMovies.length) * 100;
 
   return (
-    <div className="max-w-6xl mx-auto my-6 grid grid-cols-1 lg:grid-cols-4 gap-8 text-white px-4">
-      {/* Perfect Match Fullscreen Alert overlay */}
-      {matchAlert && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-950/90 backdrop-blur-md animate-fade-in">
-          {/* Sparkles particle simulation */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            {[...Array(20)].map((_, i) => {
-              const delay = Math.random() * 2;
-              const left = Math.random() * 100;
-              const top = Math.random() * 100;
-              return (
-                <span
-                  key={i}
-                  style={{
-                    left: `${left}%`,
-                    top: `${top}%`,
-                    animationDelay: `${delay}s`,
-                    fontSize: `${Math.random() * 20 + 15}px`
-                  }}
-                  className="absolute text-yellow-400 animate-ping opacity-60"
-                >
-                  {["✨", "🍿", "💖", "🎉"][i % 4]}
-                </span>
-              );
-            })}
+    <div className="max-w-4xl mx-auto flex flex-col h-[calc(100vh-140px)] px-4">
+      {/* Progress Bar & Header */}
+      <div className="flex items-center justify-between mb-4 gap-6 shrink-0 mt-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-[#bd3191]/10 flex items-center justify-center border border-[#bd3191]/20 shadow-lg">
+            <span className="text-xl">{currentUser?.avatar}</span>
           </div>
+          <div>
+            <div className="text-sm font-bold text-[#F5F7FA]">{currentUser?.name}</div>
+            <div className="text-xs font-semibold text-[#9CA3AF]">Oy Veriyor</div>
+          </div>
+        </div>
 
-          <div className="text-center space-y-4 max-w-sm p-6 bg-gray-900 border border-emerald-500/30 rounded-3xl shadow-2xl shadow-emerald-500/10 scale-105 transition-all">
-            <span className="text-6xl animate-bounce block">🎉 EŞLEŞME! 🎉</span>
-            <img
-              src={matchAlert.poster}
-              alt={matchAlert.title}
-              className="w-48 h-72 object-cover mx-auto rounded-2xl border-4 border-emerald-500/30 shadow-xl"
+        <div className="flex-1 max-w-xl">
+          <div className="flex justify-between text-xs font-bold text-[#9CA3AF] mb-2 uppercase tracking-wider">
+            <span>İlerleme</span>
+            <span>{currentIndex} / {safeMovies.length}</span>
+          </div>
+          <div className="h-2.5 bg-[#11151E] rounded-full overflow-hidden border border-[#1E2533] shadow-inner">
+            <div
+              className="h-full bg-gradient-to-r from-[#bd3191] to-[#7d0d5a] transition-all duration-500 ease-out rounded-full"
+              style={{ width: `${progressPercentage}%` }}
             />
-            <h3 className="text-2xl font-black text-emerald-400 tracking-tight">{matchAlert.title}</h3>
-            <p className="text-sm text-gray-400">
-              Gruptaki herkes bu filmi beğendi! Akşam ne izleneceği belli oldu mu? 🍿
-            </p>
           </div>
-        </div>
-      )}
-
-      {/* Left Column: Swiper Progress & Member Tracker */}
-      <div className="lg:col-span-1 space-y-6">
-        <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-xl">
-          <h3 className="font-extrabold text-base text-sky-300 border-b border-gray-800 pb-3 mb-4 flex items-center gap-2">
-            📊 Oyuncu Durumu
-          </h3>
-
-          <div className="space-y-3">
-            {members.map((member, idx) => {
-              const progress = getUserProgress(member.name);
-              const isFinished = progress >= roomMovies.length;
-              return (
-                <div key={idx} className="bg-gray-950/60 border border-gray-850 rounded-xl p-3 flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-base shrink-0">{member.avatar}</span>
-                      <span className="font-bold text-xs truncate max-w-[120px]">{member.name}</span>
-                    </div>
-                    {isFinished ? (
-                      <span className="text-[8px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">
-                        Tamamladı
-                      </span>
-                    ) : (
-                      <span className="text-[8px] font-bold px-2 py-0.5 rounded bg-gray-800 text-gray-400 border border-gray-700/50 uppercase">
-                        Oyluyor...
-                      </span>
-                    )}
-                  </div>
-                  {/* Miniature progress bar */}
-                  <div className="w-full h-1 bg-gray-900 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full transition-all duration-350 ${isFinished ? 'bg-emerald-400' : 'bg-sky-400'}`}
-                      style={{ width: `${(progress / roomMovies.length) * 100}%` }}
-                    />
-                  </div>
-                  <div className="text-[9px] text-gray-500 font-semibold text-right">
-                    {progress} / {roomMovies.length} film
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Session Management */}
-        <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-xl space-y-3">
-          <h3 className="font-extrabold text-base text-red-400 border-b border-gray-800 pb-3 mb-1 flex items-center gap-1.5">
-            🚪 Oturum Yönetimi
-          </h3>
-          <button
-            onClick={() => {
-              confirmAction(
-                "Mevcut oturumu sonlandırmak ve ana ekrana dönmek istediğinize emin misiniz? Bütün oylama verileriniz silinecektir.",
-                leaveRoom,
-                "Oturumdan Çık 🚪"
-              );
-            }}
-            className="w-full py-2.5 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 text-xs font-black transition cursor-pointer text-center"
-          >
-            Oturumdan Çık 🚪
-          </button>
         </div>
       </div>
 
-      {/* Right Column: Swipe Area */}
-      <div className="lg:col-span-3 flex flex-col items-center justify-center min-h-[500px]">
-        {!isUserFinished && currentMovie ? (
-          <div className="w-full flex flex-col items-center">
-            {/* Round progress indicator */}
-            <div className="mb-4 text-center">
-              <span className="text-[10px] text-sky-400 font-extrabold uppercase tracking-widest bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20">
-                Film {currentIndex + 1} / {roomMovies.length}
-              </span>
-            </div>
+      {/* Main Swipe Area */}
+      <div className="flex-1 flex flex-col items-center justify-center relative w-full perspective-1000">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-auto h-[45vh] max-h-[420px] aspect-[2/3] bg-[#11151E]/60 backdrop-blur-md rounded-3xl border border-[#1E2533]/40 scale-[0.95] translate-y-4 opacity-50 shadow-2xl" />
+          <div className="absolute w-auto h-[45vh] max-h-[420px] aspect-[2/3] bg-[#11151E]/60 rounded-3xl border border-[#1E2533]/40 scale-[0.90] translate-y-8 opacity-25" />
+        </div>
 
-            {/* Tinder swipe card */}
-            <SwipeCard
-              movie={currentMovie}
-              onVote={handleVoteSubmit}
-            />
-          </div>
-        ) : (
-          <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 max-w-md w-full text-center space-y-6 shadow-2xl">
-            <span className="text-6xl block animate-bounce">🏁</span>
-            <h3 className="text-2xl font-black text-sky-300">Harika, senin oylaman bitti!</h3>
-            <p className="text-sm text-gray-400 leading-relaxed">
-              Tüm filmleri başarıyla değerlendirdin. Arkadaşlarının swiplema işlemini bitirmesini bekliyoruz.
-            </p>
-
-            <div className="py-4 border-t border-b border-gray-850">
-              <div className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-2">Genel Oylama İlerlemesi</div>
-              <div className="grid grid-cols-2 gap-2 text-left">
-                {members.map((m, idx) => (
-                  <div key={idx} className="text-xs flex justify-between bg-gray-950 px-3 py-1.5 rounded-lg border border-gray-850">
-                    <span className="truncate">{m.avatar} {m.name}</span>
-                    <span className="font-bold text-sky-400">
-                      {getUserProgress(m.name) >= roomMovies.length ? '✓ Bitti' : `${getUserProgress(m.name)}/${roomMovies.length}`}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex flex-col gap-2 pt-2">
-              <button
-                onClick={() => setPage('results')}
-                className={`w-full font-bold py-3 rounded-xl shadow-lg transition text-sm cursor-pointer ${allFinished
-                    ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-emerald-500/10'
-                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white border border-gray-700/50'
-                  }`}
-              >
-                {allFinished ? '➔ Sonuçları Gör!' : 'Yine de Sonuçları İncele'}
-              </button>
-
-              {!allFinished && (
-                <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider block">
-                  Herkes bitirdiğinde sonuçlar kilidi açılacaktır.
-                </span>
-              )}
-            </div>
+        {currentMovie && (
+          <div className="w-full max-w-sm z-10">
+            <SwipeCard key={currentMovie.id} movie={currentMovie} onVote={handleVote} />
           </div>
         )}
+      </div>
+
+      <div className="text-center mt-6 mb-4 text-xs font-semibold text-[#4B5563] shrink-0 flex items-center justify-center gap-2">
+        <Info className="w-4 h-4" /> Kartları sürükleyerek veya butonları kullanarak oy verebilirsiniz.
+      </div>
+    
+      {/* Activity Feed / Emoji Chat */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none">
+        {activities.map((act) => (
+          <div key={act.id} className="animate-slide-up-fade bg-[#181D28]/90 backdrop-blur-md border border-[#1E2533] px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-semibold text-white pointer-events-auto">
+            <div className="w-8 h-8 rounded-full bg-[#11151E] flex items-center justify-center">
+              {renderVoteIcon(act.vote)}
+            </div>
+            <span>
+              <span className="text-[#9CA3AF] mr-1">{act.name}</span>
+              {act.vote === 'like' ? 'beğendi!' : act.vote === 'dislike' ? 'pas geçti.' : 'belki izler.'}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Film, Tag, Globe, Star, Clock, MonitorPlay, Image, Video, MessageSquare } from 'lucide-react';
 
 const GENRES = ["Aksiyon", "Komedi", "Dram", "Bilim Kurgu", "Korku", "Gerilim", "Animasyon", "Gizem", "Suç", "Romantik"];
 const PLATFORMS = ["Netflix", "Disney+", "Prime Video", "Apple TV"];
@@ -20,13 +21,14 @@ export default function MovieForm({ onSubmit, editingMovie, onCancel }) {
     if (editingMovie) {
       setTitle(editingMovie.title);
       setGenre(editingMovie.genre);
-      setRating(editingMovie.rating);
-      setNote(editingMovie.note);
+      setRating(editingMovie.rating.toString());
+      setNote(editingMovie.note || '');
       setSelectedPlatforms(editingMovie.platforms || []);
-      setDuration(editingMovie.duration?.toString() || '120');
+      setDuration(editingMovie.duration.toString());
       setLanguage(editingMovie.language || LANGUAGES[0]);
       setPoster(editingMovie.poster || '');
       setTrailer(editingMovie.trailer || '');
+      setError('');
     } else {
       resetForm();
     }
@@ -42,13 +44,12 @@ export default function MovieForm({ onSubmit, editingMovie, onCancel }) {
     setLanguage(LANGUAGES[0]);
     setPoster('');
     setTrailer('');
+    setError('');
   };
 
   const handlePlatformToggle = (platform) => {
     setSelectedPlatforms(prev =>
-      prev.includes(platform)
-        ? prev.filter(p => p !== platform)
-        : [...prev, platform]
+      prev.includes(platform) ? prev.filter(p => p !== platform) : [...prev, platform]
     );
   };
 
@@ -59,9 +60,7 @@ export default function MovieForm({ onSubmit, editingMovie, onCancel }) {
       return;
     }
     setError('');
-
     const defaultPoster = "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&auto=format&fit=crop&q=80";
-
     onSubmit({
       title: title.trim(),
       genre,
@@ -76,96 +75,93 @@ export default function MovieForm({ onSubmit, editingMovie, onCancel }) {
     resetForm();
   };
 
+  const getPlatformChipStyle = (platform, isSelected) => {
+    if (!isSelected) return 'bg-[#181D28] text-[#9CA3AF] border-[#1E2533] hover:text-[#F5F7FA]';
+    switch (platform) {
+      case 'Netflix': return 'bg-red-900/25 text-red-400 border-red-900/40';
+      case 'Disney+': return 'bg-blue-900/25 text-blue-400 border-blue-900/40';
+      case 'Prime Video': return 'bg-sky-900/25 text-sky-400 border-sky-900/40';
+      case 'Apple TV': return 'bg-neutral-800/50 text-neutral-300 border-neutral-700/40';
+      default: return 'bg-[#bd3191]/10 text-[#bd3191] border-[#bd3191]/30';
+    }
+  };
+
+  const inputClass = "w-full px-4 py-3 text-sm rounded-xl bg-[#181D28] border border-[#1E2533] focus:outline-none focus:border-[#bd3191] focus:ring-1 focus:ring-[#bd3191]/20 text-[#F5F7FA] placeholder-[#4B5563] transition";
+  const labelClass = "flex items-center gap-2 text-xs font-semibold text-[#9CA3AF]";
+
   return (
-    <form onSubmit={handleSubmit} className="bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-2xl space-y-4 text-white">
-      <div className="flex items-center justify-between border-b border-gray-800 pb-3">
-        <h3 className="text-xl font-bold bg-gradient-to-r from-sky-400 to-purple-500 bg-clip-text text-transparent">
-          {editingMovie ? '🎬 Filmi Güncelle' : '🍿 Yeni Film Ekle'}
+    <form onSubmit={handleSubmit} className="bg-[#11151E] border border-[#1E2533] p-6 rounded-2xl space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-[#1E2533] pb-4">
+        <h3 className="text-base font-bold text-[#F5F7FA] flex items-center gap-2">
+          <Film className="w-5 h-5 text-[#bd3191]" />
+          {editingMovie ? 'Filmi Güncelle' : 'Yeni Film Ekle'}
         </h3>
         {editingMovie && (
-          <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
-            Düzenleme Modu
+          <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-[#F59E0B]/10 text-[#F59E0B]">
+            Düzenleme
           </span>
         )}
       </div>
 
-      <div>
-        <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Film / Dizi Adı</label>
+      {/* Title */}
+      <div className="space-y-2">
+        <label className={labelClass}>
+          <Film className="w-4 h-4" /> Film / Dizi Adı
+        </label>
         <input
           type="text"
           value={title}
-          onChange={(e) => {
-            setTitle(e.target.value);
-            if (e.target.value.trim()) setError('');
-          }}
+          onChange={(e) => { setTitle(e.target.value); if (e.target.value.trim()) setError(''); }}
           placeholder="Örn: Interstellar"
-          className="w-full px-4 py-2 rounded-xl bg-gray-950 border border-gray-800 focus:outline-none focus:border-sky-500 text-white placeholder-gray-600 transition"
+          className={inputClass}
           required
         />
-        {error && <p className="text-[10px] text-red-500 font-bold mt-1.5">{error}</p>}
+        {error && <p className="text-sm text-[#EF4444] font-semibold">{error}</p>}
       </div>
 
-      {/* Tür ve Dil */}
+      {/* Genre & Language */}
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Tür</label>
-          <select
-            value={genre}
-            onChange={(e) => setGenre(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-gray-950 border border-gray-800 focus:outline-none focus:border-sky-500 text-white transition"
-          >
-            {GENRES.map(g => (
-              <option key={g} value={g}>{g}</option>
-            ))}
+        <div className="space-y-2">
+          <label className={labelClass}>
+            <Tag className="w-4 h-4" /> Tür
+          </label>
+          <select value={genre} onChange={(e) => setGenre(e.target.value)} className={inputClass}>
+            {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
           </select>
         </div>
-        <div>
-          <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Dil</label>
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-gray-950 border border-gray-800 focus:outline-none focus:border-sky-500 text-white transition"
-          >
-            {LANGUAGES.map(l => (
-              <option key={l} value={l}>{l}</option>
-            ))}
+        <div className="space-y-2">
+          <label className={labelClass}>
+            <Globe className="w-4 h-4" /> Dil
+          </label>
+          <select value={language} onChange={(e) => setLanguage(e.target.value)} className={inputClass}>
+            {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
           </select>
         </div>
       </div>
 
-      {/* IMDb Puanı ve Süre */}
+      {/* Rating & Duration */}
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">IMDb Puanı</label>
-          <input
-            type="number"
-            min="1.0"
-            max="10.0"
-            step="0.1"
-            value={rating}
-            onChange={(e) => setRating(e.target.value)}
-            className="w-full px-4 py-2 rounded-xl bg-gray-950 border border-gray-800 focus:outline-none focus:border-sky-500 text-white transition"
-            required
-          />
+        <div className="space-y-2">
+          <label className={labelClass}>
+            <Star className="w-4 h-4 text-[#F59E0B]" /> IMDb Puanı
+          </label>
+          <input type="number" min="1.0" max="10.0" step="0.1" value={rating} onChange={(e) => setRating(e.target.value)} className={inputClass} required />
         </div>
-        <div>
-          <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Süre (Dakika)</label>
-          <input
-            type="number"
-            min="1"
-            max="600"
-            value={duration}
-            onChange={(e) => setDuration(e.target.value)}
-            className="w-full px-4 py-2 rounded-xl bg-gray-950 border border-gray-800 focus:outline-none focus:border-sky-500 text-white transition"
-            required
-          />
+        <div className="space-y-2">
+          <label className={labelClass}>
+            <Clock className="w-4 h-4" /> Süre (dk)
+          </label>
+          <input type="number" min="1" max="600" value={duration} onChange={(e) => setDuration(e.target.value)} className={inputClass} required />
         </div>
       </div>
 
-      {/* Platform Seçimi */}
-      <div>
-        <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">İzlenebilecek Platformlar</label>
-        <div className="flex flex-wrap gap-2">
+      {/* Platforms */}
+      <div className="space-y-2">
+        <label className={labelClass}>
+          <MonitorPlay className="w-4 h-4" /> Platformlar
+        </label>
+        <div className="grid grid-cols-2 gap-3">
           {PLATFORMS.map(p => {
             const isSelected = selectedPlatforms.includes(p);
             return (
@@ -173,10 +169,7 @@ export default function MovieForm({ onSubmit, editingMovie, onCancel }) {
                 type="button"
                 key={p}
                 onClick={() => handlePlatformToggle(p)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 border cursor-pointer ${isSelected
-                    ? 'bg-sky-500/20 text-sky-400 border-sky-500/30'
-                    : 'bg-gray-950 text-gray-500 border-gray-800 hover:text-gray-300'
-                  }`}
+                className={`py-2 rounded-xl text-xs font-bold border transition cursor-pointer flex items-center justify-center gap-1.5 ${getPlatformChipStyle(p, isSelected)}`}
               >
                 {isSelected ? '✓' : '+'} {p}
               </button>
@@ -185,55 +178,49 @@ export default function MovieForm({ onSubmit, editingMovie, onCancel }) {
         </div>
       </div>
 
-      {/* Poster ve Fragman Linkleri */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Afiş Görsel URL</label>
-          <input
-            type="url"
-            value={poster}
-            onChange={(e) => setPoster(e.target.value)}
-            placeholder="https://..."
-            className="w-full px-4 py-2 rounded-xl bg-gray-950 border border-gray-800 focus:outline-none focus:border-sky-500 text-white placeholder-gray-700 text-xs transition"
-          />
+      {/* Poster & Trailer URLs */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className={labelClass}>
+            <Image className="w-4 h-4" /> Afiş URL
+          </label>
+          <input type="url" value={poster} onChange={(e) => setPoster(e.target.value)} placeholder="https://..." className={inputClass} />
         </div>
-        <div>
-          <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Fragman YouTube URL</label>
-          <input
-            type="url"
-            value={trailer}
-            onChange={(e) => setTrailer(e.target.value)}
-            placeholder="https://youtube.com/watch?v=..."
-            className="w-full px-4 py-2 rounded-xl bg-gray-950 border border-gray-800 focus:outline-none focus:border-sky-500 text-white placeholder-gray-700 text-xs transition"
-          />
+        <div className="space-y-2">
+          <label className={labelClass}>
+            <Video className="w-4 h-4" /> Fragman URL
+          </label>
+          <input type="url" value={trailer} onChange={(e) => setTrailer(e.target.value)} placeholder="https://youtube.com/..." className={inputClass} />
         </div>
       </div>
 
-      {/* Konu / Not */}
-      <div>
-        <label className="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wider">Özet veya Kişisel Not</label>
+      {/* Note */}
+      <div className="space-y-2">
+        <label className={labelClass}>
+          <MessageSquare className="w-4 h-4" /> Özet / Not
+        </label>
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Film konusu veya neden izlenmesi gerektiği hakkında kısa açıklama..."
+          placeholder="Film hakkında kısa açıklama..."
           rows="3"
-          className="w-full px-4 py-2 rounded-xl bg-gray-950 border border-gray-800 focus:outline-none focus:border-sky-500 text-white placeholder-gray-700 text-xs resize-none transition"
-        ></textarea>
+          className={`${inputClass} resize-none`}
+        />
       </div>
 
-      {/* Butonlar */}
+      {/* Buttons */}
       <div className="flex gap-3 pt-2">
         <button
           type="submit"
-          className="flex-1 bg-gradient-to-r from-sky-500 to-purple-600 hover:from-sky-600 hover:to-purple-700 transition text-white font-bold py-2.5 rounded-xl shadow-lg shadow-sky-500/10 cursor-pointer"
+          className="flex-1 bg-[#bd3191] hover:bg-[#7d0d5a] text-white font-bold py-3 rounded-xl text-sm transition cursor-pointer"
         >
-          {editingMovie ? 'Değişiklikleri Kaydet' : 'Filmi Havuza Ekle'}
+          {editingMovie ? 'Kaydet' : 'Filmi Ekle'}
         </button>
         {editingMovie && (
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 font-semibold transition cursor-pointer"
+            className="px-5 py-3 rounded-xl bg-[#181D28] border border-[#1E2533] hover:bg-[#1E2533] text-[#9CA3AF] font-bold text-sm transition cursor-pointer"
           >
             İptal
           </button>

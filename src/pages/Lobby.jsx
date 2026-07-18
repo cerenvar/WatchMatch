@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { BOT_PRESETS } from '../hooks/useRoomSync';
 
-const AVATARS = ["🍿", "🎬", "🚀", "🦄", "👽", "👻", "🎨", "🍕", "🎮", "🎸", "🦁", "🔮"];
+const AVATARS = ["🐶", "🐱", "🦊", "🐼", "🐻", "🐸", "🐰", "🐯", "🐵", "🐧", "🦉", "🦄"];
 const GENRES = ["Aksiyon", "Komedi", "Dram", "Bilim Kurgu", "Korku", "Gerilim", "Animasyon", "Gizem", "Suç", "Romantik"];
 const PLATFORMS = ["Netflix", "Disney+", "Prime Video", "Apple TV"];
 const LANGUAGES = ["İngilizce", "Türkçe", "Japonca", "Korece", "Fransızca", "İspanyolca"];
 
 const MOODS = [
-  { name: "⚡ Aksiyon & Bilim Kurgu", genres: ["Aksiyon", "Bilim Kurgu"] },
-  { name: "😂 Neşeli & Eğlenceli", genres: ["Komedi", "Animasyon"] },
-  { name: "😢 Duygusal & Hüzünlü", genres: ["Dram"] },
-  { name: "😱 Korku & Gerilim", genres: ["Korku", "Gerilim"] },
-  { name: "🧠 Suç & Gizem", genres: ["Suç", "Gizem"] }
+  { name: "Aksiyon & Bilim Kurgu", genres: ["Aksiyon", "Bilim Kurgu"] },
+  { name: "Neşeli & Eğlenceli", genres: ["Komedi", "Animasyon"] },
+  { name: "Duygusal & Hüzünlü", genres: ["Dram"] },
+  { name: "Korku & Gerilim", genres: ["Korku", "Gerilim"] },
+  { name: "Suç & Gizem", genres: ["Suç", "Gizem"] }
 ];
 
 const TMDB_GENRE_MAP = {
@@ -59,7 +59,7 @@ export default function Lobby({
   addBotFriend,
   updateFilters,
   startGame,
-  initialMoviesPool,
+  movies: initialMoviesPool = [],
   leaveRoom,
   confirmAction,
   alertAction
@@ -80,11 +80,11 @@ export default function Lobby({
       // Genre filter
       if (filters.genres.length > 0 && !filters.genres.includes(movie.genre)) return;
       // Platform filter
-      if (filters.platforms.length > 0 && !movie.platforms.some(p => filters.platforms.includes(p))) return;
+      if (filters.platforms.length > 0 && !(movie.platforms && movie.platforms.some(p => filters.platforms.includes(p)))) return;
       // Rating filter
-      if (filters.minRating > 0 && parseFloat(movie.rating) < filters.minRating) return;
+      if (filters.minRating > 0 && parseFloat(movie.rating || 0) < filters.minRating) return;
       // Duration filter
-      if (filters.maxDuration < 240 && movie.duration > filters.maxDuration) return;
+      if (filters.maxDuration < 240 && (movie.duration || 0) > filters.maxDuration) return;
       // Language filter
       if (filters.language && movie.language !== filters.language) return;
 
@@ -95,13 +95,13 @@ export default function Lobby({
 
   const handleCreate = (e) => {
     e.preventDefault();
-    if (!name.trim()) return alertAction("Lütfen adınızı girin!", "İsim Gerekli 👤");
+    if (!name.trim()) return alertAction("Lütfen adınızı girin!", "İsim Gerekli ");
     createRoom(name.trim(), selectedAvatar, customRoomName);
   };
 
   const handleJoin = (e) => {
     e.preventDefault();
-    if (!name.trim()) return alertAction("Lütfen adınızı girin!", "İsim Gerekli 👤");
+    if (!name.trim()) return alertAction("Lütfen adınızı girin!", "İsim Gerekli ");
     if (!joinCode.trim()) return alertAction("Lütfen oda kodunu girin!", "Kod Gerekli 🔑");
     joinRoom(joinCode.trim(), name.trim(), selectedAvatar);
   };
@@ -140,7 +140,7 @@ export default function Lobby({
     try {
       const apiKey = import.meta.env.VITE_TMDB_API_KEY;
       if (!apiKey) {
-        alertAction("Lütfen .env dosyasında VITE_TMDB_API_KEY değerini ayarlayın!", "Eksik Yapılandırma ⚠️");
+        alertAction("Lütfen .env dosyasında VITE_TMDB_API_KEY değerini ayarlayın!", "Eksik Yapılandırma");
         setFetchingTmdb(false);
         return;
       }
@@ -156,7 +156,7 @@ export default function Lobby({
           fetch(`https://api.themoviedb.org/3/movie/${endpoint}?api_key=${apiKey}&language=tr-TR&page=${p}`).then(r => r.json())
         );
       }
-      
+
       const pagesData = await Promise.all(pagePromises);
       const rawMovies = [];
       pagesData.forEach(pData => {
@@ -218,32 +218,32 @@ export default function Lobby({
 
       // Filter according to lobby configurations
       let filtered = [...uniqueMovies];
-      
+
       // Genre filter
       if (filters.genres.length > 0) {
         filtered = filtered.filter(m => filters.genres.includes(m.genre));
       }
-      
+
       // Platform filter
       if (filters.platforms.length > 0) {
         filtered = filtered.filter(m =>
           m.platforms.some(p => filters.platforms.includes(p))
         );
       }
-      
+
       // Rating filter
       if (filters.minRating > 0) {
         filtered = filtered.filter(m => m.rating >= filters.minRating);
       }
-      
+
       // Duration filter
       if (filters.maxDuration < 240) {
         filtered = filtered.filter(m => m.duration <= filters.maxDuration);
       }
-      
+
       // Language filter
       if (filters.language) {
-        filtered = filtered.filter(m => filters.language === filters.language);
+        filtered = filtered.filter(m => m.language === filters.language);
       }
 
       if (filtered.length === 0) {
@@ -255,7 +255,7 @@ export default function Lobby({
       startGame(filtered); // start matching session with all matching films in the pool
     } catch (err) {
       console.error(err);
-      alertAction("TMDb canlı verileri çekilirken bir sorun oluştu.", "Bağlantı Hatası ❌");
+      alertAction("TMDb canlı verileri çekilirken bir sorun oluştu.", "Bağlantı Hatası");
     } finally {
       setFetchingTmdb(false);
     }
@@ -266,7 +266,7 @@ export default function Lobby({
   // SCREEN 1: Authentication / Room Setup (Not logged in)
   if (!currentUser) {
     return (
-      <div className="max-w-md mx-auto my-12 bg-gray-900 border border-gray-800 p-8 rounded-3xl shadow-2xl text-white">
+      <div className="max-w-md mx-auto my-12 bg-[#11151E]/60 backdrop-blur-md border border-[#1E2533]/60 p-8 rounded-3xl shadow-2xl text-white">
         <div className="text-center mb-8">
           <span className="text-5xl block mb-2">👋</span>
           <h2 className="text-2xl font-black bg-gradient-to-r from-sky-400 to-purple-500 bg-clip-text text-transparent">
@@ -283,7 +283,7 @@ export default function Lobby({
             <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider text-center">
               Karakterini Seç: {selectedAvatar}
             </label>
-            <div className="grid grid-cols-6 gap-2 bg-gray-950 p-3 rounded-2xl border border-gray-800">
+            <div className="grid grid-cols-6 gap-2 bg-[#181D28]/60 backdrop-blur-md p-3 rounded-2xl border border-[#1E2533]/60">
               {AVATARS.map(avatar => (
                 <button
                   type="button"
@@ -291,7 +291,7 @@ export default function Lobby({
                   onClick={() => setSelectedAvatar(avatar)}
                   className={`text-2xl p-2 rounded-xl transition-all duration-200 cursor-pointer text-center ${selectedAvatar === avatar
                     ? 'bg-sky-500/25 border border-sky-500 scale-110'
-                    : 'bg-transparent border border-transparent hover:bg-gray-800/40'
+                    : 'bg-transparent border border-transparent hover:bg-[#1E2533]/60/40'
                     }`}
                 >
                   {avatar}
@@ -311,7 +311,7 @@ export default function Lobby({
                 localStorage.setItem('mm_saved_name', e.target.value);
               }}
               placeholder="Örn: Burak"
-              className="w-full px-4 py-3 rounded-xl bg-gray-950 border border-gray-850 text-sm focus:outline-none focus:border-sky-500 text-white transition font-medium"
+              className="w-full px-4 py-3 rounded-xl bg-[#181D28]/60 backdrop-blur-md border border-[#1E2533]/50 text-sm focus:outline-none focus:border-[#bd3191]/50 focus:ring-1 focus:ring-[#bd3191]/20 text-white transition font-medium"
             />
           </div>
 
@@ -324,7 +324,7 @@ export default function Lobby({
                 value={customRoomName}
                 onChange={(e) => setCustomRoomName(e.target.value)}
                 placeholder="Örn: Cuma Gecesi Ekibi"
-                className="w-full px-4 py-3 rounded-xl bg-gray-950 border border-gray-850 text-sm focus:outline-none focus:border-sky-500 text-white transition font-medium"
+                className="w-full px-4 py-3 rounded-xl bg-[#181D28]/60 backdrop-blur-md border border-[#1E2533]/50 text-sm focus:outline-none focus:border-[#bd3191]/50 focus:ring-1 focus:ring-[#bd3191]/20 text-white transition font-medium"
               />
             </div>
           )}
@@ -338,7 +338,7 @@ export default function Lobby({
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value)}
                 placeholder="Örn: 123456"
-                className="w-full px-4 py-3 rounded-xl bg-gray-950 border border-gray-850 text-sm focus:outline-none focus:border-sky-500 text-white transition font-mono tracking-widest text-center"
+                className="w-full px-4 py-3 rounded-xl bg-[#181D28]/60 backdrop-blur-md border border-[#1E2533]/50 text-sm focus:outline-none focus:border-[#bd3191]/50 focus:ring-1 focus:ring-[#bd3191]/20 text-white transition font-mono tracking-widest text-center"
               />
             </div>
           )}
@@ -347,9 +347,9 @@ export default function Lobby({
           <div className="space-y-3 pt-2">
             <button
               type="submit"
-              className="w-full py-3 bg-gradient-to-r from-sky-500 via-purple-500 to-pink-500 hover:from-sky-600 hover:via-purple-600 hover:to-pink-600 text-white font-extrabold rounded-xl text-sm transition shadow-lg shadow-purple-500/10 cursor-pointer tracking-wider uppercase"
+              className="w-full py-3 bg-gradient-to-r from-[#bd3191] via-[#7d0d5a] to-[#490a35] hover:from-[#bd3191]/95 hover:via-[#7d0d5a]/95 hover:to-[#490a35]/95 shadow-[0_4px_20px_rgba(189,49,145,0.2)] text-white font-extrabold rounded-xl text-sm transition shadow-lg shadow-[#bd3191]/10 cursor-pointer tracking-wider uppercase"
             >
-              {isJoinMode ? 'Odaya Katıl 🚀' : 'Yeni Oda Oluştur 🔑'}
+              {isJoinMode ? 'Odaya Katıl' : 'Yeni Oda Oluştur'}
             </button>
 
             {/* Toggle Modes */}
@@ -357,7 +357,7 @@ export default function Lobby({
               <button
                 type="button"
                 onClick={() => setIsJoinMode(!isJoinMode)}
-                className="flex-1 py-2 text-xs font-bold bg-gray-950 hover:bg-gray-800 text-sky-400 rounded-xl border border-gray-850 transition cursor-pointer"
+                className="flex-1 py-2 text-xs font-bold bg-[#181D28]/60 backdrop-blur-md hover:bg-[#1E2533]/60 text-[#bd3191] rounded-xl border border-[#1E2533]/50 transition cursor-pointer"
               >
                 {isJoinMode ? 'Oda Kurucu Modu' : 'Odaya Katılma Modu'}
               </button>
@@ -378,7 +378,7 @@ export default function Lobby({
 
         {/* Room History shortcuts */}
         {roomHistory.length > 0 && (
-          <div className="mt-8 pt-6 border-t border-gray-800">
+          <div className="mt-8 pt-6 border-t border-[#1E2533]/60">
             <span className="text-[10px] text-gray-500 font-extrabold block uppercase tracking-wider mb-2.5 text-center">Son Katıldığın Odalar</span>
             <div className="flex flex-col gap-2 max-h-[140px] overflow-y-auto pr-1">
               {roomHistory.map((item, idx) => {
@@ -392,13 +392,13 @@ export default function Lobby({
                       if (!name.trim()) return alertAction("Lütfen önce adınızı girin!", "Giriş Gerekli 👤");
                       joinRoom(code, name.trim(), selectedAvatar);
                     }}
-                    className="w-full p-2.5 rounded-xl bg-gray-950 border border-gray-850 hover:bg-gray-800/40 text-left transition flex items-center justify-between text-xs font-semibold cursor-pointer"
+                    className="w-full p-2.5 rounded-xl bg-[#181D28]/60 backdrop-blur-md border border-[#1E2533]/50 hover:bg-[#1E2533]/60/40 text-left transition flex items-center justify-between text-xs font-semibold cursor-pointer"
                   >
                     <div className="min-w-0">
                       <span className="text-gray-300 block truncate">{rName}</span>
                       <span className="text-[9px] text-gray-500 font-mono">Kod: {code}</span>
                     </div>
-                    <span className="text-[10px] text-sky-400 font-bold shrink-0">Hızlı Gir →</span>
+                    <span className="text-[10px] text-[#bd3191] font-bold shrink-0">Hızlı Gir →</span>
                   </button>
                 );
               })}
@@ -415,19 +415,19 @@ export default function Lobby({
 
       {/* Left Column: Room Info & Joined Members */}
       <div className="lg:col-span-1 space-y-6">
-        <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-xl">
-          <div className="flex justify-between items-center border-b border-gray-800 pb-3 mb-4">
+        <div className="bg-[#11151E]/60 backdrop-blur-md border border-[#1E2533]/60 p-6 rounded-2xl shadow-xl">
+          <div className="flex justify-between items-center border-b border-[#1E2533]/60 pb-3 mb-4">
             <h3 className="font-extrabold text-lg text-sky-300">
               {currentUser.isSolo ? '👤 Solo Oturum' : '👥 Oda Üyeleri'}
             </h3>
-            <span className="bg-sky-500/10 text-sky-400 border border-sky-500/20 text-xs px-2.5 py-0.5 rounded-full font-bold">
+            <span className="bg-sky-500/10 text-[#bd3191] border border-sky-500/20 text-xs px-2.5 py-0.5 rounded-full font-bold">
               {members.length} Kişi
             </span>
           </div>
 
           <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
             {members.map((member, idx) => (
-              <div key={idx} className="flex items-center justify-between bg-gray-950/50 p-2.5 rounded-xl border border-gray-800">
+              <div key={idx} className="flex items-center justify-between bg-[#181D28]/60 backdrop-blur-md/50 p-2.5 rounded-xl border border-[#1E2533]/60">
                 <div className="flex items-center gap-2.5">
                   <span className="text-xl">{member.avatar}</span>
                   <div>
@@ -438,7 +438,7 @@ export default function Lobby({
                   </div>
                 </div>
                 {member.isHost ? (
-                  <span className="text-[10px] bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2 py-0.5 rounded-md font-extrabold">👑 Lider</span>
+                  <span className="text-[10px] bg-sky-500/10 text-[#bd3191] border border-sky-500/20 px-2 py-0.5 rounded-md font-extrabold">👑 Lider</span>
                 ) : (
                   <span className="text-[10px] bg-gray-800 text-gray-400 border border-gray-700/50 px-2 py-0.5 rounded-md font-semibold">Aktif</span>
                 )}
@@ -448,16 +448,16 @@ export default function Lobby({
 
           {/* Share instructions for guest */}
           {!currentUser.isHost && (
-            <div className="mt-4 p-3 bg-gray-950/40 rounded-xl border border-gray-850 text-center text-xs text-gray-400">
-              Yöneticinin filtreleri seçip oyunu başlatması bekleniyor... 🍿
+            <div className="mt-4 p-3 bg-[#181D28]/60 backdrop-blur-md/40 rounded-xl border border-[#1E2533]/50 text-center text-xs text-gray-400">
+              Yöneticinin filtreleri seçip oyunu başlatması bekleniyor...
             </div>
           )}
         </div>
 
         {/* Invite Virtual Friends (Bots) - Host Only, NOT in Solo */}
         {currentUser.isHost && !currentUser.isSolo && (
-          <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-xl">
-            <h3 className="font-extrabold text-base text-purple-400 border-b border-gray-800 pb-3 mb-4 flex items-center gap-1.5">
+          <div className="bg-[#11151E]/60 backdrop-blur-md border border-[#1E2533]/60 p-6 rounded-2xl shadow-xl">
+            <h3 className="font-extrabold text-base text-purple-400 border-b border-[#1E2533]/60 pb-3 mb-4 flex items-center gap-1.5">
               🤖 Yapay Zeka Arkadaşlar
             </h3>
             <p className="text-[11px] text-gray-400 mb-4">
@@ -472,8 +472,8 @@ export default function Lobby({
                     onClick={() => addBotFriend(bot)}
                     disabled={isAdded}
                     className={`p-2.5 rounded-xl border text-left flex flex-col justify-between h-20 transition text-xs font-semibold cursor-pointer ${isAdded
-                      ? 'bg-gray-950/50 border-gray-850 text-gray-500 opacity-60'
-                      : 'bg-gray-950 border-purple-500/15 hover:border-purple-500/30 text-gray-200 hover:bg-gray-950/80 shadow-md'
+                      ? 'bg-[#181D28]/60 backdrop-blur-md/50 border-[#1E2533]/50 text-gray-500 opacity-60'
+                      : 'bg-[#181D28]/60 backdrop-blur-md border-purple-500/15 hover:border-purple-500/30 text-gray-200 hover:bg-[#181D28]/60 backdrop-blur-md/80 shadow-md'
                       }`}
                   >
                     <div className="flex justify-between items-center w-full">
@@ -495,8 +495,8 @@ export default function Lobby({
 
         {/* Mood Picker - Solo Mode Only */}
         {currentUser.isSolo && (
-          <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-xl space-y-3">
-            <h3 className="font-extrabold text-base text-purple-400 border-b border-gray-800 pb-3 mb-2 flex items-center gap-1.5">
+          <div className="bg-[#11151E]/60 backdrop-blur-md border border-[#1E2533]/60 p-6 rounded-2xl shadow-xl space-y-3">
+            <h3 className="font-extrabold text-base text-purple-400 border-b border-[#1E2533]/60 pb-3 mb-2 flex items-center gap-1.5">
               🎭 Bugün Nasıl Hissediyorsun?
             </h3>
             <p className="text-[11px] text-gray-400">
@@ -513,7 +513,7 @@ export default function Lobby({
                     onClick={() => handleMoodSelect(mood)}
                     className={`w-full p-2.5 rounded-xl border text-left text-xs font-bold transition flex items-center justify-between cursor-pointer ${isSelected
                       ? 'bg-purple-500/10 border-purple-500/35 text-purple-400 shadow-md'
-                      : 'bg-gray-950 border-gray-850 text-gray-300 hover:text-white'
+                      : 'bg-[#181D28]/60 backdrop-blur-md border-[#1E2533]/50 text-gray-300 hover:text-white'
                       }`}
                   >
                     <span>{mood.name}</span>
@@ -527,8 +527,8 @@ export default function Lobby({
 
         {/* Solo Session Exit Button */}
         {currentUser.isSolo && (
-          <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-xl space-y-3">
-            <h3 className="font-extrabold text-base text-red-400 border-b border-gray-800 pb-3 mb-2 flex items-center gap-1.5">
+          <div className="bg-[#11151E]/60 backdrop-blur-md border border-[#1E2533]/60 p-6 rounded-2xl shadow-xl space-y-3">
+            <h3 className="font-extrabold text-base text-red-400 border-b border-[#1E2533]/60 pb-3 mb-2 flex items-center gap-1.5">
               🚪 Oturumu Sonlandır
             </h3>
             <p className="text-[11px] text-gray-400">
@@ -553,10 +553,10 @@ export default function Lobby({
 
       {/* Middle/Right Columns: Settings & Filters Dashboard */}
       <div className="lg:col-span-2 space-y-6">
-        <div className="bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-xl">
-          <div className="border-b border-gray-800 pb-3 mb-6 flex justify-between items-center">
-            <h3 className="font-extrabold text-lg text-sky-300">⚙️ Eşleşme Filtreleri</h3>
-            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
+        <div className="bg-[#11151E]/60 backdrop-blur-md border border-[#1E2533]/60 p-6 rounded-2xl shadow-xl">
+          <div className="border-b border-[#1E2533]/60 pb-3 mb-6 flex justify-between items-center">
+            <h3 className="font-extrabold text-lg text-sky-300">Eşleşme Filtreleri</h3>
+            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-sky-500/10 text-[#bd3191] border border-sky-500/20">
               {currentUser.isHost ? 'Yönetim Sende' : 'Sadece İzle'}
             </span>
           </div>
@@ -564,50 +564,46 @@ export default function Lobby({
           <div className="space-y-6">
             {/* Movie Pool Source Selector */}
             {currentUser.isHost && (
-              <div className="bg-gray-950/40 p-4 rounded-xl border border-gray-850 space-y-3">
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider">🍿 Film Veri Kaynağı</label>
+              <div className="bg-[#181D28]/60 backdrop-blur-md/40 p-4 rounded-xl border border-[#1E2533]/50 space-y-3">
+                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Film Veri Kaynağı</label>
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
                   <button
                     type="button"
                     onClick={() => setMovieSource('local')}
-                    className={`px-3 py-2 rounded-lg text-xs font-bold transition border cursor-pointer ${
-                      movieSource === 'local'
-                        ? 'bg-sky-500/10 border-sky-500/35 text-sky-400 shadow-md'
-                        : 'bg-gray-900 text-gray-400 border-gray-800 hover:text-white'
-                    }`}
+                    className={`px-3 py-2 rounded-lg text-xs font-bold transition border cursor-pointer ${movieSource === 'local'
+                      ? 'bg-sky-500/10 border-sky-500/35 text-[#bd3191] shadow-md'
+                      : 'bg-[#11151E]/60 backdrop-blur-md text-gray-400 border-[#1E2533]/60 hover:text-white'
+                      }`}
                   >
-                    🎬 Yerel Kütüphane ({initialMoviesPool.length})
+                    Yerel Kütüphane ({initialMoviesPool.length})
                   </button>
                   <button
                     type="button"
                     onClick={() => setMovieSource('tmdb_popular')}
-                    className={`px-3 py-2 rounded-lg text-xs font-bold transition border cursor-pointer ${
-                      movieSource === 'tmdb_popular'
-                        ? 'bg-purple-500/10 border-purple-500/35 text-purple-400 shadow-md'
-                        : 'bg-gray-900 text-gray-400 border-gray-800 hover:text-white'
-                    }`}
+                    className={`px-3 py-2 rounded-lg text-xs font-bold transition border cursor-pointer ${movieSource === 'tmdb_popular'
+                      ? 'bg-purple-500/10 border-purple-500/35 text-purple-400 shadow-md'
+                      : 'bg-[#11151E]/60 backdrop-blur-md text-gray-400 border-[#1E2533]/60 hover:text-white'
+                      }`}
                   >
-                    🔥 Popüler (TMDb)
+                    Popüler (TMDb)
                   </button>
                   <button
                     type="button"
                     onClick={() => setMovieSource('tmdb_top_rated')}
-                    className={`px-3 py-2 rounded-lg text-xs font-bold transition border cursor-pointer ${
-                      movieSource === 'tmdb_top_rated'
-                        ? 'bg-amber-500/10 border-amber-500/35 text-amber-400 shadow-md'
-                        : 'bg-gray-900 text-gray-400 border-gray-800 hover:text-white'
-                    }`}
+                    className={`px-3 py-2 rounded-lg text-xs font-bold transition border cursor-pointer ${movieSource === 'tmdb_top_rated'
+                      ? 'bg-amber-500/10 border-amber-500/35 text-amber-400 shadow-md'
+                      : 'bg-[#11151E]/60 backdrop-blur-md text-gray-400 border-[#1E2533]/60 hover:text-white'
+                      }`}
                   >
                     🌟 En İyiler (TMDb)
                   </button>
                   <button
                     type="button"
                     onClick={() => setMovieSource('tmdb_now_playing')}
-                    className={`px-3 py-2 rounded-lg text-xs font-bold transition border cursor-pointer ${
-                      movieSource === 'tmdb_now_playing'
-                        ? 'bg-pink-500/10 border-pink-500/35 text-pink-400 shadow-md'
-                        : 'bg-gray-900 text-gray-400 border-gray-800 hover:text-white'
-                    }`}
+                    className={`px-3 py-2 rounded-lg text-xs font-bold transition border cursor-pointer ${movieSource === 'tmdb_now_playing'
+                      ? 'bg-pink-500/10 border-pink-500/35 text-pink-400 shadow-md'
+                      : 'bg-[#11151E]/60 backdrop-blur-md text-gray-400 border-[#1E2533]/60 hover:text-white'
+                      }`}
                   >
                     🎭 Vizyondakiler (TMDb)
                   </button>
@@ -627,8 +623,8 @@ export default function Lobby({
                       onClick={() => handleGenreToggle(genre)}
                       disabled={!currentUser.isHost}
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition border cursor-pointer ${isSelected
-                        ? 'bg-sky-500/10 text-sky-400 border-sky-500/35 shadow-md shadow-sky-500/5'
-                        : 'bg-gray-950 text-gray-400 border-gray-850 hover:text-white'
+                        ? 'bg-sky-500/10 text-[#bd3191] border-sky-500/35 shadow-md shadow-sky-500/5'
+                        : 'bg-[#181D28]/60 backdrop-blur-md text-gray-400 border-[#1E2533]/50 hover:text-white'
                         }`}
                     >
                       {genre}
@@ -649,11 +645,10 @@ export default function Lobby({
                       key={platform}
                       onClick={() => handlePlatformToggle(platform)}
                       disabled={!currentUser.isHost}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition border cursor-pointer ${
-                        isSelected
-                          ? 'bg-purple-500/10 text-purple-400 border-purple-500/35 shadow-md shadow-purple-500/5'
-                          : 'bg-gray-950 text-gray-400 border-gray-850 hover:text-white'
-                      }`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition border cursor-pointer ${isSelected
+                        ? 'bg-purple-500/10 text-purple-400 border-purple-500/35 shadow-md shadow-purple-500/5'
+                        : 'bg-[#181D28]/60 backdrop-blur-md text-gray-400 border-[#1E2533]/50 hover:text-white'
+                        }`}
                     >
                       {platform}
                     </button>
@@ -665,7 +660,7 @@ export default function Lobby({
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* IMDb Rating Filter */}
               <div>
                 <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Minimum IMDb Puanı: {filters.minRating > 0 ? `${filters.minRating} ⭐` : 'Tümü'}</label>
@@ -677,7 +672,7 @@ export default function Lobby({
                   value={filters.minRating || 0}
                   disabled={!currentUser.isHost}
                   onChange={(e) => updateFilters({ ...filters, minRating: parseFloat(e.target.value) })}
-                  className="w-full h-1.5 bg-gray-950 rounded-lg appearance-none cursor-pointer accent-sky-500 focus:outline-none"
+                  className="w-full h-1.5 bg-[#181D28]/60 backdrop-blur-md rounded-lg appearance-none cursor-pointer accent-[#bd3191] focus:outline-none"
                 />
                 <div className="flex justify-between text-[10px] text-gray-600 mt-1">
                   <span>Puan Seçilmedi</span>
@@ -698,13 +693,34 @@ export default function Lobby({
                   value={filters.maxDuration || 240}
                   disabled={!currentUser.isHost}
                   onChange={(e) => updateFilters({ ...filters, maxDuration: parseInt(e.target.value) })}
-                  className="w-full h-1.5 bg-gray-950 rounded-lg appearance-none cursor-pointer accent-sky-500 focus:outline-none"
+                  className="w-full h-1.5 bg-[#181D28]/60 backdrop-blur-md rounded-lg appearance-none cursor-pointer accent-[#bd3191] focus:outline-none"
                 />
                 <div className="flex justify-between text-[10px] text-gray-600 mt-1">
                   <span>80 Dk</span>
-                  <span>120 Dk (Kısa)</span>
+                  <span>120 Dk</span>
                   <span>180 Dk</span>
                   <span>Sınırsız</span>
+                </div>
+              </div>
+
+              {/* Movie Count Filter */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Oylanacak Film Sayısı: {filters.maxMovieCount || 20}</label>
+                <input
+                  type="range"
+                  min="5"
+                  max="50"
+                  step="5"
+                  value={filters.maxMovieCount || 20}
+                  disabled={!currentUser.isHost}
+                  onChange={(e) => updateFilters({ ...filters, maxMovieCount: parseInt(e.target.value) })}
+                  className="w-full h-1.5 bg-[#181D28]/60 backdrop-blur-md rounded-lg appearance-none cursor-pointer accent-[#bd3191] focus:outline-none"
+                />
+                <div className="flex justify-between text-[10px] text-gray-600 mt-1">
+                  <span>5</span>
+                  <span>20</span>
+                  <span>35</span>
+                  <span>50</span>
                 </div>
               </div>
             </div>
@@ -716,7 +732,7 @@ export default function Lobby({
                 value={filters.language || ''}
                 disabled={!currentUser.isHost}
                 onChange={(e) => updateFilters({ ...filters, language: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-gray-950 border border-gray-800 text-sm focus:outline-none focus:border-sky-500 transition text-gray-300"
+                className="w-full px-3 py-2 rounded-xl bg-[#181D28]/60 backdrop-blur-md border border-[#1E2533]/60 text-sm focus:outline-none focus:border-[#bd3191]/50 focus:ring-1 focus:ring-[#bd3191]/20 transition text-gray-300"
               >
                 <option value="">Fark Etmez (Tüm Diller)</option>
                 {LANGUAGES.map(l => (
@@ -727,13 +743,13 @@ export default function Lobby({
           </div>
 
           {/* Game Stats & Launch Section */}
-          <div className="mt-8 border-t border-gray-800 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-950/30 -mx-6 -mb-6 p-6 rounded-b-2xl">
+          <div className="mt-8 border-t border-[#1E2533]/60 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 bg-[#181D28]/60 backdrop-blur-md/30 -mx-6 -mb-6 p-6 rounded-b-2xl">
             <div className="text-center md:text-left">
               <span className="text-xs text-gray-500 font-bold block uppercase tracking-wider">Aktif Eşleşecek Film Sayısı</span>
               <span className="text-2xl font-black text-emerald-400">
                 {movieSource === 'local' ? `${matchedCount} film` : 'Canlı TMDb Havuzu'}
               </span>
-              <span className="text-xs text-gray-400"> 
+              <span className="text-xs text-gray-400">
                 {movieSource === 'local' ? ' (filtrelerinize uygun)' : ' (seçtiğiniz filtrelerle canlı çekilir)'}
               </span>
             </div>
@@ -743,15 +759,15 @@ export default function Lobby({
                 onClick={handleStartGameClick}
                 disabled={fetchingTmdb || (movieSource === 'local' && matchedCount === 0)}
                 className={`w-full md:w-auto font-black px-8 py-3 rounded-xl shadow-lg transition tracking-wide text-sm cursor-pointer ${(movieSource === 'local' && matchedCount === 0)
-                    ? 'bg-gray-800 text-gray-500 border border-gray-800 cursor-not-allowed shadow-none'
-                    : 'bg-gradient-to-r from-sky-500 via-purple-500 to-pink-500 hover:from-sky-600 hover:via-purple-600 hover:to-pink-600 text-white shadow-purple-500/10'
+                  ? 'bg-gray-800 text-gray-500 border border-[#1E2533]/60 cursor-not-allowed shadow-none'
+                  : 'bg-gradient-to-r from-[#bd3191] via-[#7d0d5a] to-[#490a35] hover:from-[#bd3191]/95 hover:via-[#7d0d5a]/95 hover:to-[#490a35]/95 shadow-[0_4px_20px_rgba(189,49,145,0.2)] text-white shadow-[#bd3191]/10'
                   }`}
               >
-                {fetchingTmdb ? 'Yükleniyor...' : (currentUser.isSolo ? '🎬 Önerileri Getir!' : '🎮 Eşleşmeyi Başlat!')}
+                {fetchingTmdb ? 'Yükleniyor...' : (currentUser.isSolo ? 'Önerileri Getir!' : 'Eşleşmeyi Başlat!')}
               </button>
             ) : (
               <div className="text-sm font-semibold text-purple-400 animate-pulse bg-purple-500/10 border border-purple-500/20 px-4 py-2 rounded-xl">
-                🍿 Liderin oyunu başlatması bekleniyor...
+                Liderin oyunu başlatması bekleniyor...
               </div>
             )}
           </div>
