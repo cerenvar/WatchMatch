@@ -6,8 +6,24 @@ Proje, modern web teknolojileri temellerini pekiştirmek ve gerçekçi bir Front
 
 ---
 
-## 📸 Proje Ekran Görüntüsü
-![WatchMatch Film Havuzu](public/screenshot.png)
+## 📸 Proje Arayüzleri (Tiffany & Altın Teması)
+
+Uygulamanın yenilenen lüks *Glassmorphism* (Cam Morfoloji) tasarımı ve **Tiffany & Altın** renk paletiyle sunduğu arayüz kesitleri:
+
+### 1. Sinematik Giriş & Kayıt Ekranı
+![Giriş Ekranı](public/screenshots/auth.png)
+
+### 2. Çok Oyunculu Lobi & Profil Seçimi
+![Lobi Ekranı](public/screenshots/lobby.png)
+
+### 3. Gelişmiş Film Havuzu & Eşleşme Filtreleri
+![Filtreler ve Havuz](public/screenshots/filters.png)
+
+### 4. Oylama Arenası (Tinder-Swipe Akışı)
+![Oylama Arenası](public/screenshots/swipe.png)
+
+### 5. Canlı Sonuçlar & Karar Çarkı (MatchWheel)
+![Sonuçlar](public/screenshots/results.png)
 
 ---
 
