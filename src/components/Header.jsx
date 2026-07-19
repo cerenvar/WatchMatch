@@ -56,8 +56,8 @@ export default function Header({ activePage, setPage, roomId, roomName, leaveRoo
               <div className="text-[11px] sm:text-base font-bold text-[#ccb494] sm:text-[#F5F7FA] tracking-wider font-mono select-all bg-[#ccb494]/10 sm:bg-transparent px-2 py-1 sm:p-0 rounded-lg sm:rounded-none border border-[#ccb494]/20 sm:border-transparent">{roomId}</div>
             </div>
             <div className="w-px h-6 sm:h-8 bg-[#1E2533]" />
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-[#5ca4a7]/15 flex items-center justify-center text-sm font-bold text-[#5ca4a7]">
+            <div className="flex items-center gap-1 sm:gap-3">
+              <div className="hidden sm:flex w-9 h-9 rounded-full bg-[#5ca4a7]/15 items-center justify-center text-sm font-bold text-[#5ca4a7]">
                 {currentUser?.name?.charAt(0)?.toUpperCase() || <User className="w-4 h-4" />}
               </div>
               <button
