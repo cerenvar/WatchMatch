@@ -7,10 +7,10 @@ import React from 'react';
  * and dynamically shifts its pink/magenta color to Tiffany Blue using CSS filters.
  */
 export default function Logo({ size = 'md', subtitle = 'BİRLİKTE KEŞFEDİN' }) {
-  const iconSize = size === 'sm' ? 'w-12 h-12' : size === 'lg' ? 'w-28 h-28' : 'w-16 h-16';
-  const titleSize = size === 'sm' ? 'text-2xl' : size === 'lg' ? 'text-5xl' : 'text-3xl';
-  const subtitleSize = size === 'sm' ? 'text-[10px]' : size === 'lg' ? 'text-sm' : 'text-xs';
-  const gap = size === 'sm' ? 'gap-3' : size === 'lg' ? 'gap-6' : 'gap-4';
+  const iconSize = size === 'sm' ? 'w-10 h-10 md:w-12 md:h-12' : size === 'lg' ? 'w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28' : 'w-12 h-12 md:w-16 md:h-16';
+  const titleSize = size === 'sm' ? 'text-xl md:text-2xl' : size === 'lg' ? 'text-3xl sm:text-4xl md:text-5xl' : 'text-2xl md:text-3xl';
+  const subtitleSize = size === 'sm' ? 'text-[9px] md:text-[10px]' : size === 'lg' ? 'text-[10px] sm:text-xs md:text-sm' : 'text-[10px] md:text-xs';
+  const gap = size === 'sm' ? 'gap-2 md:gap-3' : size === 'lg' ? 'gap-3 sm:gap-4 md:gap-6' : 'gap-3 md:gap-4';
 
   return (
     <div className={`flex items-center ${gap} select-none`}>
