@@ -50,12 +50,12 @@ export default function Header({ activePage, setPage, roomId, roomName, leaveRoo
 
         {/* Right side: Room info or status */}
         {roomId ? (
-          <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
-              <div className="text-xs text-[#9CA3AF] font-medium">{roomName || 'Oda Kodu'}</div>
-              <div className="text-base font-bold text-[#F5F7FA] tracking-wider font-mono select-all">{roomId}</div>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="text-right">
+              <div className="text-[10px] text-[#9CA3AF] font-medium hidden sm:block">{roomName || 'Oda Kodu'}</div>
+              <div className="text-[11px] sm:text-base font-bold text-[#ccb494] sm:text-[#F5F7FA] tracking-wider font-mono select-all bg-[#ccb494]/10 sm:bg-transparent px-2 py-1 sm:p-0 rounded-lg sm:rounded-none border border-[#ccb494]/20 sm:border-transparent">{roomId}</div>
             </div>
-            <div className="w-px h-8 bg-[#1E2533]" />
+            <div className="w-px h-6 sm:h-8 bg-[#1E2533]" />
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-[#5ca4a7]/15 flex items-center justify-center text-sm font-bold text-[#5ca4a7]">
                 {currentUser?.name?.charAt(0)?.toUpperCase() || <User className="w-4 h-4" />}
