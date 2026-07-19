@@ -77,8 +77,8 @@ export default function Database({ movies, onSubmitMovie, onDeleteMovie, editing
           />
         </div>
         
-        <div className="flex gap-4">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+          <div className="relative w-full sm:w-auto">
             <Filter className="w-3.5 h-3.5 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <select
               value={filterPlatform}
@@ -89,7 +89,7 @@ export default function Database({ movies, onSubmitMovie, onDeleteMovie, editing
             </select>
           </div>
 
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <Filter className="w-3.5 h-3.5 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <select
               value={filterGenre}

@@ -278,7 +278,7 @@ export default function Lobby({
       <div className="max-w-6xl mx-auto my-8 px-4 text-white">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[75vh]">
           {/* Left Column: Platform Tour & Features (7 cols) */}
-          <div className="lg:col-span-7 space-y-8 pr-0 lg:pr-6">
+          <div className="lg:col-span-7 space-y-8 pr-0 lg:pr-6 order-2 lg:order-1">
             <div className="space-y-4">
               <span className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-[#5ca4a7]/10 border border-[#5ca4a7]/20 text-[#5ca4a7] text-xs font-black uppercase tracking-wider rounded-full shadow-[0_0_15px_rgba(92,164,167,0.15)]">
                 ✨ Yeni Nesil Film Eşleştirme
@@ -357,7 +357,7 @@ export default function Lobby({
           </div>
 
           {/* Right Column: Setup Card (5 cols) */}
-          <div className="lg:col-span-5 flex justify-center w-full">
+          <div className="lg:col-span-5 flex justify-center w-full order-1 lg:order-2">
             <div className="w-full max-w-md bg-white/[0.02] backdrop-blur-2xl border border-white/[0.08] p-8 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.6)] text-white relative">
               <div className="text-center mb-8">
                 <div className="mb-4">
