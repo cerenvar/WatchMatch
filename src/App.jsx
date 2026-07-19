@@ -9,6 +9,42 @@ import useRoomSync from './hooks/useRoomSync';
 import CustomModal from './components/CustomModal';
 import Auth from './pages/Auth';
 import { auth } from './lib/firebase';
+import { ArrowUp } from 'lucide-react';
+
+function ScrollToTop() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const toggleVisibility = () => {
+      if (window.scrollY > 300) {
+        setVisible(true);
+      } else {
+        setVisible(false);
+      }
+    };
+    window.addEventListener("scroll", toggleVisibility);
+    return () => window.removeEventListener("scroll", toggleVisibility);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  };
+
+  if (!visible) return null;
+
+  return (
+    <button
+      onClick={scrollToTop}
+      className="fixed bottom-6 right-6 z-50 p-3.5 rounded-2xl bg-[#5ca4a7]/90 text-[#050b0c] border border-[#5ca4a7]/20 hover:bg-[#5ca4a7] transition-all duration-300 shadow-[0_0_20px_rgba(92,164,167,0.4)] cursor-pointer hover:scale-110 active:scale-95 animate-fade-in flex items-center justify-center"
+      aria-label="Yukarı Çık"
+    >
+      <ArrowUp className="w-5 h-5" strokeWidth={3} />
+    </button>
+  );
+}
 
 export default function App() {
   const [page, setPage] = useState('lobby');
@@ -75,7 +111,7 @@ export default function App() {
     try {
       // Show loading alert or something (we don't have a loading state, but we can set modal)
       const pagePromises = [];
-      const totalPages = 18; // approx 360 movies
+      const totalPages = 30; // approx 600 movies
       for (let p = 1; p <= totalPages; p++) {
         pagePromises.push(
           fetch(`https://api.themoviedb.org/3/movie/now_playing?api_key=${apiKey}&language=tr-TR&page=${p}`).then(r => r.json())
@@ -116,10 +152,14 @@ export default function App() {
         const duration = 90 + (m.id % 8) * 10;
 
         return {
-          id: `tmdb_${m.id}`, title: m.title, genre: mappedGenre,
+          id: `tmdb_${m.id}`,
+          title: m.title,
+          year: m.release_date ? m.release_date.split('-')[0] : '2024',
+          genre: mappedGenre,
           rating: parseFloat(m.vote_average?.toFixed(1)) || 7.0,
           note: m.overview || 'Konu özeti bulunamadı.',
-          platforms, duration,
+          platforms,
+          duration,
           language: getLangName(m.original_language),
           poster: m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&auto=format&fit=crop&q=80',
           trailer: 'https://www.youtube.com'
@@ -141,14 +181,121 @@ export default function App() {
     }
   };
 
+  const autoSyncNewTmdbMovies = async (currentMoviesList) => {
+    const apiKey = import.meta.env.VITE_TMDB_API_KEY;
+    if (!apiKey) return;
+
+    try {
+      // Check popular movies (first page) on TMDb for any new additions
+      const res = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=tr-TR&page=1`);
+      const data = await res.json();
+      if (!data.results) return;
+
+      const rawMovies = data.results;
+      const currentIds = new Set(currentMoviesList.map(m => m.id));
+
+      const genreMap = {
+        28: "Aksiyon", 12: "Aksiyon", 16: "Animasyon", 35: "Komedi",
+        80: "Suç", 99: "Dram", 18: "Dram", 10751: "Animasyon",
+        14: "Bilim Kurgu", 36: "Dram", 27: "Korku", 10402: "Dram",
+        9648: "Gizem", 10749: "Romantik", 878: "Bilim Kurgu",
+        10770: "Dram", 53: "Gerilim", 10752: "Dram", 37: "Aksiyon"
+      };
+
+      const getLangName = (lang) => {
+        switch (lang) {
+          case 'en': return 'İngilizce'; case 'tr': return 'Türkçe';
+          case 'ja': return 'Japonca'; case 'ko': return 'Korece';
+          case 'fr': return 'Fransızca'; case 'es': return 'İspanyolca';
+          default: return 'İngilizce';
+        }
+      };
+
+      const newMoviesToPush = [];
+      rawMovies.forEach((m) => {
+        const customId = `tmdb_${m.id}`;
+        if (!currentIds.has(customId)) {
+          let mappedGenre = "Aksiyon";
+          if (m.genre_ids && m.genre_ids.length > 0) mappedGenre = genreMap[m.genre_ids[0]] || "Aksiyon";
+          const platforms = [];
+          if (m.id % 2 === 0) platforms.push('Netflix');
+          if (m.id % 3 === 0) platforms.push('Prime Video');
+          if (m.id % 5 === 0) platforms.push('Disney+');
+          if (m.id % 7 === 0) platforms.push('Apple TV');
+          if (platforms.length === 0) platforms.push('Netflix');
+          const duration = 90 + (m.id % 8) * 10;
+
+          newMoviesToPush.push({
+            id: customId,
+            title: m.title,
+            year: m.release_date ? m.release_date.split('-')[0] : '2024',
+            genre: mappedGenre,
+            rating: parseFloat(m.vote_average?.toFixed(1)) || 7.0,
+            note: m.overview || 'Konu özeti bulunamadı.',
+            platforms,
+            duration,
+            language: getLangName(m.original_language),
+            poster: m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&auto=format&fit=crop&q=80',
+            trailer: 'https://www.youtube.com'
+          });
+        }
+      });
+
+      if (newMoviesToPush.length > 0) {
+        const updatedList = [...newMoviesToPush, ...currentMoviesList];
+        setMovies(updatedList);
+        localStorage.setItem('film_match_list', JSON.stringify(updatedList));
+
+        // Trigger a toast alert on page load to inform the host/user
+        triggerAlert(
+          `${newMoviesToPush.length} yeni film TMDb'den otomatik olarak çekilerek kütüphanenize eklendi! 🎬`,
+          "TMDb Otomatik Eşitleme 🔄"
+        );
+      }
+    } catch (err) {
+      console.error("Auto sync failed:", err);
+    }
+  };
+
   useEffect(() => {
     const savedMovies = localStorage.getItem('film_match_list');
     const hasSeededTmdb = localStorage.getItem('film_match_list_tmdb_seeded') === 'true';
     const apiKey = import.meta.env.VITE_TMDB_API_KEY;
 
-    if (apiKey && !hasSeededTmdb) seedFromTmdb();
-    else if (savedMovies) setMovies(JSON.parse(savedMovies));
-    else { setMovies(defaultMovies); localStorage.setItem('film_match_list', JSON.stringify(defaultMovies)); }
+    let initialList = [];
+    let needsReseed = false;
+
+    if (savedMovies) {
+      try {
+        initialList = JSON.parse(savedMovies);
+        // Force re-seed if client database is old (< 500 films) or missing release year property
+        if (hasSeededTmdb && Array.isArray(initialList)) {
+          const tmdbMovies = initialList.filter(m => m.id.startsWith('tmdb_'));
+          if (tmdbMovies.length > 0 && (!tmdbMovies[0].year || initialList.length < 500)) {
+            needsReseed = true;
+          }
+        }
+      } catch (e) {
+        console.error("Migration check failed:", e);
+      }
+    }
+
+    if (apiKey && (!hasSeededTmdb || needsReseed)) {
+      seedFromTmdb();
+    } else {
+      if (savedMovies && initialList.length > 0) {
+        setMovies(initialList);
+      } else {
+        initialList = defaultMovies;
+        setMovies(defaultMovies);
+        localStorage.setItem('film_match_list', JSON.stringify(defaultMovies));
+      }
+
+      // Check for updates dynamically on startup
+      if (apiKey && initialList.length > 0) {
+        autoSyncNewTmdbMovies(initialList);
+      }
+    }
   }, []);
 
   const saveMoviesToStorage = (updatedList) => {
@@ -190,11 +337,11 @@ export default function App() {
   const renderPage = () => {
     switch (page) {
       case 'lobby':
-        return <Lobby roomId={roomSync.roomId} currentUser={roomSync.currentUser} members={roomSync.members} filters={roomSync.filters} createRoom={roomSync.createRoom} joinRoom={roomSync.joinRoom} startSoloMode={roomSync.startSoloMode} addBotFriend={roomSync.addBotFriend} updateFilters={roomSync.updateFilters} startGame={roomSync.startGame} movies={movies} leaveRoom={roomSync.leaveRoom} confirmAction={triggerConfirm} alertAction={triggerAlert} />;
+        return <Lobby roomId={roomSync.roomId} currentUser={roomSync.currentUser} members={roomSync.members} filters={roomSync.filters} createRoom={roomSync.createRoom} joinRoom={roomSync.joinRoom} startSoloMode={roomSync.startSoloMode} addBotFriend={roomSync.addBotFriend} updateFilters={roomSync.updateFilters} startGame={roomSync.startGame} movies={movies} leaveRoom={roomSync.leaveRoom} confirmAction={triggerConfirm} alertAction={triggerAlert} authUser={authUser} />;
       case 'swiper':
         return <SwipeArena currentUser={roomSync.currentUser} members={roomSync.members} roomMovies={roomSync.roomMovies} votes={roomSync.votes} submitVote={roomSync.submitVote} setPage={setPage} leaveRoom={roomSync.leaveRoom} confirmAction={triggerConfirm} />;
       case 'results':
-        return <Results members={roomSync.members} roomMovies={roomSync.roomMovies} votes={roomSync.votes} setPage={setPage} leaveRoom={roomSync.leaveRoom} confirmAction={triggerConfirm} />;
+        return <Results members={roomSync.members} roomMovies={roomSync.roomMovies} votes={roomSync.votes} setPage={setPage} leaveRoom={roomSync.leaveRoom} confirmAction={triggerConfirm} currentUser={roomSync.currentUser} resetGame={roomSync.resetGame} />;
       case 'database':
         return <Database movies={movies} onSubmitMovie={handleMovieSubmit} onDeleteMovie={handleMovieDelete} editingMovie={editingMovie} setEditingMovie={setEditingMovie} resetToDefaults={handleResetToDefaults} fetchFromTmdb={seedFromTmdb} confirmAction={triggerConfirm} />;
       default:
@@ -204,8 +351,8 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#0c0208] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-[#bd3191] border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-[#030708] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[#5ca4a7] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -215,10 +362,11 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen text-[#F5F7FA] flex flex-col font-['Inter',sans-serif] bg-gradient-to-b from-[#0c0208] via-[#15030f] to-[#200416] relative overflow-hidden">
+    <div className="min-h-screen text-[#F5F7FA] flex flex-col font-['Inter',sans-serif] bg-gradient-to-b from-[#030708] via-[#071113] to-[#0a1619] relative overflow-hidden">
       {/* Background glow layers matching user image */}
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#bd3191]/12 blur-[150px] rounded-full pointer-events-none -translate-x-1/2 translate-y-1/2" />
-      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#7d0d5a]/10 blur-[120px] rounded-full pointer-events-none translate-x-1/3 -translate-y-1/3" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#5ca4a7]/12 blur-[150px] rounded-full pointer-events-none -translate-x-1/2 translate-y-1/2" />
+      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#076465]/10 blur-[120px] rounded-full pointer-events-none translate-x-1/3 -translate-y-1/3" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-[#5ca4a7]/12 to-[#076465]/8 blur-[180px] rounded-full pointer-events-none z-0" />
       
       <Header
         activePage={page} setPage={setPage} roomId={roomSync.roomId}
@@ -228,7 +376,7 @@ export default function App() {
         authUser={authUser}
         onSignOut={handleSignOut}
       />
-      <main className={`flex-grow ${page === 'swiper' ? '' : 'pb-12'}`}>
+      <main className={`flex-grow z-10 relative ${page === 'swiper' ? '' : 'pb-12'}`}>
         {renderPage()}
       </main>
       <footer className={`shrink-0 text-center text-xs py-4 select-none ${page === 'swiper' ? 'pb-3' : 'border-t border-[#1E2533]'}`}>
@@ -253,6 +401,7 @@ export default function App() {
           onConfirm={modalConfig.onConfirm} onCancel={modalConfig.onCancel}
         />
       )}
+      <ScrollToTop />
     </div>
   );
 }

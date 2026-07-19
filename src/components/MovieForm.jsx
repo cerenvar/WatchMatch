@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Film, Tag, Globe, Star, Clock, MonitorPlay, Image, Video, MessageSquare } from 'lucide-react';
+import { Film, Tag, Globe, Star, Clock, MonitorPlay, Image, Video, MessageSquare, Calendar } from 'lucide-react';
 
 const GENRES = ["Aksiyon", "Komedi", "Dram", "Bilim Kurgu", "Korku", "Gerilim", "Animasyon", "Gizem", "Suç", "Romantik"];
 const PLATFORMS = ["Netflix", "Disney+", "Prime Video", "Apple TV"];
@@ -15,6 +15,7 @@ export default function MovieForm({ onSubmit, editingMovie, onCancel }) {
   const [language, setLanguage] = useState(LANGUAGES[0]);
   const [poster, setPoster] = useState('');
   const [trailer, setTrailer] = useState('');
+  const [year, setYear] = useState('2024');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -28,6 +29,7 @@ export default function MovieForm({ onSubmit, editingMovie, onCancel }) {
       setLanguage(editingMovie.language || LANGUAGES[0]);
       setPoster(editingMovie.poster || '');
       setTrailer(editingMovie.trailer || '');
+      setYear(editingMovie.year ? editingMovie.year.toString() : '2024');
       setError('');
     } else {
       resetForm();
@@ -44,6 +46,7 @@ export default function MovieForm({ onSubmit, editingMovie, onCancel }) {
     setLanguage(LANGUAGES[0]);
     setPoster('');
     setTrailer('');
+    setYear('2024');
     setError('');
   };
 
@@ -63,6 +66,7 @@ export default function MovieForm({ onSubmit, editingMovie, onCancel }) {
     const defaultPoster = "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&auto=format&fit=crop&q=80";
     onSubmit({
       title: title.trim(),
+      year: parseInt(year) || 2024,
       genre,
       rating: parseFloat(rating) || 7.0,
       note: note.trim(),
@@ -140,8 +144,8 @@ export default function MovieForm({ onSubmit, editingMovie, onCancel }) {
         </div>
       </div>
 
-      {/* Rating & Duration */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Rating, Duration & Year */}
+      <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
           <label className={labelClass}>
             <Star className="w-4 h-4 text-[#F59E0B]" /> IMDb Puanı
@@ -153,6 +157,12 @@ export default function MovieForm({ onSubmit, editingMovie, onCancel }) {
             <Clock className="w-4 h-4" /> Süre (dk)
           </label>
           <input type="number" min="1" max="600" value={duration} onChange={(e) => setDuration(e.target.value)} className={inputClass} required />
+        </div>
+        <div className="space-y-2">
+          <label className={labelClass}>
+            <Calendar className="w-4 h-4 text-[#ccb494]" /> Yayın Yılı
+          </label>
+          <input type="number" min="1800" max="2100" value={year} onChange={(e) => setYear(e.target.value)} className={inputClass} required />
         </div>
       </div>
 

@@ -51,9 +51,16 @@ export default function MovieCard({ movie, onDelete, onEdit }) {
           <h4 className="font-bold text-lg text-[#F5F7FA] line-clamp-1 group-hover:text-white transition">
             {movie.title}
           </h4>
-          <span className="shrink-0 bg-[#181D28] text-[#9CA3AF] text-xs px-2.5 py-1 rounded-md font-semibold">
-            {movie.genre}
-          </span>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <span className="bg-[#181D28] text-[#9CA3AF] text-[10px] px-2 py-0.5 rounded font-extrabold uppercase tracking-wide">
+              {movie.genre}
+            </span>
+            {movie.year && (
+              <span className="text-[#ccb494] text-[11px] font-extrabold">
+                {movie.year}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Metadata */}
@@ -85,10 +92,10 @@ export default function MovieCard({ movie, onDelete, onEdit }) {
         <div className="flex items-center justify-between border-t border-[#1E2533] pt-4 mt-auto">
           {movie.trailer ? (
             <a
-              href={movie.trailer}
+              href={movie.trailer === 'https://www.youtube.com' || !movie.trailer ? `https://www.youtube.com/results?search_query=${encodeURIComponent(movie.title + ' Fragman')}` : movie.trailer}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm font-semibold text-[#9CA3AF] hover:text-[#F5F7FA] transition flex items-center gap-2 cursor-pointer"
+              className="text-sm font-semibold text-[#9CA3AF] hover:text-[#5ca4a7] transition flex items-center gap-2 cursor-pointer"
             >
               <Play className="w-4 h-4" />
               Fragman

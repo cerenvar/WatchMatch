@@ -7,8 +7,11 @@ export default function MatchWheel({ options, onSelect }) {
   const wheelRef = useRef(null);
 
   const colors = [
-    '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6',
-    '#EC4899', '#14B8A6', '#F43F5E', '#84CC16', '#0EA5E9'
+    '#5ca4a7', // Tiffany Mavisi
+    '#f4ac5c', // Altın
+    '#ccb494', // Kum/Gold
+    '#076465', // Koyu Tiffany
+    '#ed9954'  // Sıcak Altın
   ];
 
   const spinWheel = async () => {
@@ -51,7 +54,7 @@ export default function MatchWheel({ options, onSelect }) {
       </div>
 
       {/* Wheel */}
-      <div className="w-full h-full rounded-full border-4 border-[#1E2533] bg-[#181D28] shadow-[0_0_40px_rgba(0,0,0,0.5)] overflow-hidden relative">
+      <div className="w-full h-full rounded-full border-4 border-[#182e33] bg-[#0b1517] shadow-[0_0_40px_rgba(92,164,167,0.15)] overflow-hidden relative">
         <motion.div
           ref={wheelRef}
           animate={controls}
@@ -60,42 +63,54 @@ export default function MatchWheel({ options, onSelect }) {
         >
           {options.map((option, index) => {
             const rotation = index * sliceAngle;
+            const textRotation = rotation + sliceAngle / 2;
             return (
-              <div
-                key={index}
-                className="absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-1/2 origin-bottom flex flex-col items-center justify-start pt-4"
-                style={{
-                  transform: `rotate(${rotation}deg)`,
-                  backgroundColor: 'transparent'
-                }}
-              >
+              <React.Fragment key={index}>
+                {/* Sector divider line & background wedge */}
                 <div
-                  className="absolute inset-0 origin-bottom"
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-[1.5px] h-1/2 origin-bottom flex flex-col items-center justify-start"
                   style={{
-                    backgroundColor: colors[index % colors.length],
-                    transform: `skewX(${90 - sliceAngle}deg)`,
-                    transformOrigin: 'bottom left',
-                    opacity: 0.15,
-                    borderRight: '1px solid rgba(255,255,255,0.05)'
+                    transform: `rotate(${rotation}deg)`,
+                    backgroundColor: 'rgba(92, 164, 167, 0.12)'
                   }}
-                />
-                <span
-                  className="text-xs font-black text-[#F5F7FA] -rotate-90 origin-bottom whitespace-nowrap w-24 text-right truncate drop-shadow-md z-10"
-                  style={{ transform: `translateY(-50%) rotate(-90deg)` }}
                 >
-                  {option.title}
-                </span>
-              </div>
+                  <div
+                    className="absolute inset-0 origin-bottom"
+                    style={{
+                      backgroundColor: colors[index % colors.length],
+                      transform: `skewX(${90 - sliceAngle}deg)`,
+                      transformOrigin: 'bottom left',
+                      opacity: 0.16,
+                      width: '120px'
+                    }}
+                  />
+                </div>
+
+                {/* Centered Movie Title Label */}
+                <div
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-[2px] h-1/2 origin-bottom flex flex-col items-center justify-start text-white"
+                  style={{
+                    transform: `rotate(${textRotation}deg)`
+                  }}
+                >
+                  <span
+                    className="text-[9px] font-black text-[#F5F7FA] absolute top-8 origin-center whitespace-nowrap w-24 text-center truncate drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] z-10"
+                    style={{ transform: `rotate(90deg)` }}
+                  >
+                    {option.title}
+                  </span>
+                </div>
+              </React.Fragment>
             );
           })}
         </motion.div>
       </div>
 
-      {/* Center Button */}
+      {/* Center Spin Button with Tiffany & Gold Theme */}
       <button
         onClick={spinWheel}
         disabled={isSpinning}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-[#bd3191] hover:bg-[#7d0d5a] border-4 border-[#1E2533] rounded-full text-white font-black text-sm uppercase tracking-wider shadow-xl transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed z-20 flex items-center justify-center cursor-pointer"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-[#5ca4a7] hover:bg-[#076465] text-[#050b0c] hover:text-[#F5F7FA] border-4 border-[#182e33] rounded-full font-black text-sm uppercase tracking-wider shadow-[0_0_20px_rgba(92,164,167,0.4)] transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed z-20 flex items-center justify-center cursor-pointer"
       >
         ÇEVİR
       </button>

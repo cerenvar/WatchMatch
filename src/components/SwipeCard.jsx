@@ -155,6 +155,11 @@ export default function SwipeCard({ movie, onVote }) {
 
             <h2 className="text-3xl font-black text-white leading-tight drop-shadow-xl">
               {movie.title}
+              {movie.year && (
+                <span className="text-lg text-white/60 font-semibold ml-2">
+                  ({movie.year})
+                </span>
+              )}
             </h2>
 
             <div className="flex flex-wrap gap-1.5">
@@ -213,7 +218,7 @@ export default function SwipeCard({ movie, onVote }) {
       <TrailerModal
         isOpen={showTrailer}
         onClose={() => setShowTrailer(false)}
-        trailerUrl={movie.trailer}
+        movie={movie}
       />
     </>
   );

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BOT_PRESETS } from '../hooks/useRoomSync';
+import Avatar from '../components/Avatar';
 
 const AVATARS = ["🐶", "🐱", "🦊", "🐼", "🐻", "🐸", "🐰", "🐯", "🐵", "🐧", "🦉", "🦄"];
 const GENRES = ["Aksiyon", "Komedi", "Dram", "Bilim Kurgu", "Korku", "Gerilim", "Animasyon", "Gizem", "Suç", "Romantik"];
@@ -62,14 +63,21 @@ export default function Lobby({
   movies: initialMoviesPool = [],
   leaveRoom,
   confirmAction,
-  alertAction
+  alertAction,
+  authUser
 }) {
   const [name, setName] = useState(() => localStorage.getItem('mm_saved_name') || '');
   const [selectedAvatar, setSelectedAvatar] = useState(() => localStorage.getItem('mm_saved_avatar') || AVATARS[0]);
   const [joinCode, setJoinCode] = useState('');
   const [customRoomName, setCustomRoomName] = useState('');
   const [isJoinMode, setIsJoinMode] = useState(false);
-  const [roomHistory] = useState(() => JSON.parse(localStorage.getItem('mm_room_history') || '[]'));
+  const [roomHistory, setRoomHistory] = useState([]);
+
+  useEffect(() => {
+    const uid = authUser?.uid || 'guest';
+    const key = `mm_room_history_${uid}`;
+    setRoomHistory(JSON.parse(localStorage.getItem(key) || '[]'));
+  }, [authUser]);
   const [movieSource, setMovieSource] = useState('local');
   const [fetchingTmdb, setFetchingTmdb] = useState(false);
 
@@ -150,7 +158,7 @@ export default function Lobby({
       else if (movieSource === 'tmdb_now_playing') endpoint = 'now_playing';
 
       const pagePromises = [];
-      const totalPages = 18; // 18 pages * 20 movies = 360 movies total!
+      const totalPages = 30; // 30 pages * 20 movies = 600 movies total!
       for (let p = 1; p <= totalPages; p++) {
         pagePromises.push(
           fetch(`https://api.themoviedb.org/3/movie/${endpoint}?api_key=${apiKey}&language=tr-TR&page=${p}`).then(r => r.json())
@@ -195,6 +203,7 @@ export default function Lobby({
         return {
           id: `tmdb_${m.id}`,
           title: m.title,
+          year: m.release_date ? m.release_date.split('-')[0] : '2024',
           genre: mappedGenre,
           rating: parseFloat(m.vote_average?.toFixed(1)) || 7.0,
           note: m.overview || 'Konu özeti mevcut değil.',
@@ -266,145 +275,233 @@ export default function Lobby({
   // SCREEN 1: Authentication / Room Setup (Not logged in)
   if (!currentUser) {
     return (
-      <div className="max-w-md mx-auto my-12 bg-[#11151E]/60 backdrop-blur-md border border-[#1E2533]/60 p-8 rounded-3xl shadow-2xl text-white">
-        <div className="text-center mb-8">
-          <span className="text-5xl block mb-2">👋</span>
-          <h2 className="text-2xl font-black bg-gradient-to-r from-sky-400 to-purple-500 bg-clip-text text-transparent">
-            WatchMatch'e Hoş Geldin!
-          </h2>
-          <p className="text-xs text-gray-400 mt-1">
-            Arkadaşlarınla ortak filmlerini bulmak veya tek başına öneri almak için profili doldur.
-          </p>
-        </div>
+      <div className="max-w-6xl mx-auto my-8 px-4 text-white">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[75vh]">
+          {/* Left Column: Platform Tour & Features (7 cols) */}
+          <div className="lg:col-span-7 space-y-8 pr-0 lg:pr-6">
+            <div className="space-y-4">
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 bg-[#5ca4a7]/10 border border-[#5ca4a7]/20 text-[#5ca4a7] text-xs font-black uppercase tracking-wider rounded-full shadow-[0_0_15px_rgba(92,164,167,0.15)]">
+                ✨ Yeni Nesil Film Eşleştirme
+              </span>
+              <h1 className="text-4xl lg:text-5xl font-black tracking-tight leading-[1.15] text-white">
+                Arkadaşlarınızla En Doğru <br />
+                <span className="bg-gradient-to-r from-[#5ca4a7] via-[#f4ac5c] to-[#ccb494] bg-clip-text text-transparent filter drop-shadow-[0_2px_10px_rgba(244,172,92,0.15)]">
+                  Filmi Keşfedin.
+                </span>
+              </h1>
+              <p className="text-gray-400 font-semibold text-sm leading-relaxed max-w-xl">
+                Birlikte ne izleyeceğinizi seçmek hiç bu kadar kolay ve havalı olmamıştı! WatchMatch ile kendi lobinizi kurun, arkadaşlarınızı davet edin ve ortak zevklerinizin eş zamanlı olarak nasıl eşleştiğini görün.
+              </p>
+            </div>
 
-        <form onSubmit={isJoinMode ? handleJoin : handleCreate} className="space-y-6">
-          {/* Avatar selector */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider text-center">
-              Karakterini Seç: {selectedAvatar}
-            </label>
-            <div className="grid grid-cols-6 gap-2 bg-[#181D28]/60 backdrop-blur-md p-3 rounded-2xl border border-[#1E2533]/60">
-              {AVATARS.map(avatar => (
-                <button
-                  type="button"
-                  key={avatar}
-                  onClick={() => setSelectedAvatar(avatar)}
-                  className={`text-2xl p-2 rounded-xl transition-all duration-200 cursor-pointer text-center ${selectedAvatar === avatar
-                    ? 'bg-sky-500/25 border border-sky-500 scale-110'
-                    : 'bg-transparent border border-transparent hover:bg-[#1E2533]/60/40'
-                    }`}
-                >
-                  {avatar}
-                </button>
-              ))}
+            {/* How it Works / Tour Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="glass-panel p-5 rounded-2xl hover:border-[#5ca4a7]/30 transition-all duration-300 group">
+                <div className="w-10 h-10 rounded-xl bg-[#5ca4a7]/10 flex items-center justify-center text-[#5ca4a7] mb-3 group-hover:scale-110 transition-transform duration-300 font-black">
+                  1
+                </div>
+                <h4 className="font-bold text-sm text-gray-200 mb-1">Oda Kur & Davet Et</h4>
+                <p className="text-xs text-gray-500 font-semibold leading-relaxed">
+                  Lobi oluşturup oda kodunu paylaşın veya tek başınıza AI bot arkadaşlarınızla oynamak için Solo modu seçin.
+                </p>
+              </div>
+
+              <div className="glass-panel p-5 rounded-2xl hover:border-[#f4ac5c]/30 transition-all duration-300 group">
+                <div className="w-10 h-10 rounded-xl bg-[#f4ac5c]/10 flex items-center justify-center text-[#f4ac5c] mb-3 group-hover:scale-110 transition-transform duration-300 font-black">
+                  2
+                </div>
+                <h4 className="font-bold text-sm text-gray-200 mb-1">Profilini & Filtreni Seç</h4>
+                <p className="text-xs text-gray-500 font-semibold leading-relaxed">
+                  Twemoji avatarlarından karakterini belirle. Tür, platform, puan ve süre filtrelerini dilediğin gibi ayarla.
+                </p>
+              </div>
+
+              <div className="glass-panel p-5 rounded-2xl hover:border-[#ccb494]/30 transition-all duration-300 group">
+                <div className="w-10 h-10 rounded-xl bg-[#ccb494]/10 flex items-center justify-center text-[#ccb494] mb-3 group-hover:scale-110 transition-transform duration-300 font-black">
+                  3
+                </div>
+                <h4 className="font-bold text-sm text-gray-200 mb-1">Kaydır & Eşleşmeyi Yakala</h4>
+                <p className="text-xs text-gray-500 font-semibold leading-relaxed">
+                  Filmleri sola (beğenmedim) veya sağa (beğendim) kaydır. Ortak beğeni yakalandığı an sistem eşleşmeyi bildirir!
+                </p>
+              </div>
+
+              <div className="glass-panel p-5 rounded-2xl hover:border-[#5ca4a7]/30 transition-all duration-300 group">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-3 group-hover:scale-110 transition-transform duration-300 font-black">
+                  ✓
+                </div>
+                <h4 className="font-bold text-sm text-gray-200 mb-1">Zengin Havuz & CRUD</h4>
+                <p className="text-xs text-gray-500 font-semibold leading-relaxed">
+                  TMDb'den 360+ canlı film çekebilir ya da Film Havuzu'ndan kendi filmlerinizi ekleyip güncelleyebilirsiniz.
+                </p>
+              </div>
+            </div>
+
+            {/* Platform Stats */}
+            <div className="flex flex-wrap gap-6 pt-5 border-t border-white/[0.05]">
+              <div>
+                <span className="text-2xl font-black text-[#5ca4a7] block">360+</span>
+                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Aktif Film</span>
+              </div>
+              <div className="w-px h-10 bg-white/[0.08] self-center" />
+              <div>
+                <span className="text-2xl font-black text-[#f4ac5c] block">%98</span>
+                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Karar Oranı</span>
+              </div>
+              <div className="w-px h-10 bg-white/[0.08] self-center" />
+              <div>
+                <span className="text-2xl font-black text-emerald-400 block">0 Gecikme</span>
+                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Real-Time Firebase</span>
+              </div>
             </div>
           </div>
 
-          {/* Nickname input */}
-          <div className="space-y-1">
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">İsminiz</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                localStorage.setItem('mm_saved_name', e.target.value);
-              }}
-              placeholder="Örn: Burak"
-              className="w-full px-4 py-3 rounded-xl bg-[#181D28]/60 backdrop-blur-md border border-[#1E2533]/50 text-sm focus:outline-none focus:border-[#bd3191]/50 focus:ring-1 focus:ring-[#bd3191]/20 text-white transition font-medium"
-            />
-          </div>
+          {/* Right Column: Setup Card (5 cols) */}
+          <div className="lg:col-span-5 flex justify-center w-full">
+            <div className="w-full max-w-md bg-white/[0.02] backdrop-blur-2xl border border-white/[0.08] p-8 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.6)] text-white relative">
+              <div className="text-center mb-8">
+                <div className="mb-4">
+                  <Avatar emoji={selectedAvatar} className="w-16 h-16 mx-auto animate-[bounce_2.5s_infinite]" />
+                </div>
+                <h2 className="text-2xl font-black bg-gradient-to-r from-[#5ca4a7] via-[#f4ac5c] to-[#ccb494] bg-clip-text text-transparent tracking-tight">
+                  Lobi Oturumu
+                </h2>
+                <p className="text-xs text-[#9CA3AF] font-semibold mt-2">
+                  Film eşleştirme seansına katılmak için karakterini seçip bir oda kodunu gir veya yeni oda kur.
+                </p>
+              </div>
 
-          {/* Multiplayer Room Name (If hosting and not joining) */}
-          {!isJoinMode && (
-            <div className="space-y-1">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Oda İsmi (Opsiyonel)</label>
-              <input
-                type="text"
-                value={customRoomName}
-                onChange={(e) => setCustomRoomName(e.target.value)}
-                placeholder="Örn: Cuma Gecesi Ekibi"
-                className="w-full px-4 py-3 rounded-xl bg-[#181D28]/60 backdrop-blur-md border border-[#1E2533]/50 text-sm focus:outline-none focus:border-[#bd3191]/50 focus:ring-1 focus:ring-[#bd3191]/20 text-white transition font-medium"
-              />
-            </div>
-          )}
+              <form onSubmit={isJoinMode ? handleJoin : handleCreate} className="space-y-5">
+                {/* Avatar selector */}
+                <div>
+                  <label className="text-[10px] font-extrabold text-[#ccb494] mb-2.5 uppercase tracking-wider text-center flex items-center justify-center gap-1.5">
+                    Karakterini Seç
+                  </label>
+                  <div className="grid grid-cols-6 gap-2.5 bg-white/[0.02] border border-white/[0.06] p-3.5 rounded-2xl shadow-inner">
+                    {AVATARS.map(avatar => (
+                      <button
+                        type="button"
+                        key={avatar}
+                        onClick={() => setSelectedAvatar(avatar)}
+                        className={`p-2.5 rounded-xl transition-all duration-300 cursor-pointer text-center flex items-center justify-center border ${selectedAvatar === avatar
+                          ? 'bg-[#f4ac5c]/20 border-[#f4ac5c] shadow-[0_0_15px_rgba(244,172,92,0.35)] scale-110'
+                          : 'bg-white/[0.01] border-white/[0.04] hover:bg-white/[0.08] hover:border-white/[0.1] hover:scale-105'
+                        }`}
+                      >
+                        <Avatar emoji={avatar} className="w-7 h-7" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-          {/* Room Join Code (If join mode is active) */}
-          {isJoinMode && (
-            <div className="space-y-1">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Katılım Kodu (Room Code)</label>
-              <input
-                type="text"
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value)}
-                placeholder="Örn: 123456"
-                className="w-full px-4 py-3 rounded-xl bg-[#181D28]/60 backdrop-blur-md border border-[#1E2533]/50 text-sm focus:outline-none focus:border-[#bd3191]/50 focus:ring-1 focus:ring-[#bd3191]/20 text-white transition font-mono tracking-widest text-center"
-              />
-            </div>
-          )}
-
-          {/* Dynamic submit and trigger button */}
-          <div className="space-y-3 pt-2">
-            <button
-              type="submit"
-              className="w-full py-3 bg-gradient-to-r from-[#bd3191] via-[#7d0d5a] to-[#490a35] hover:from-[#bd3191]/95 hover:via-[#7d0d5a]/95 hover:to-[#490a35]/95 shadow-[0_4px_20px_rgba(189,49,145,0.2)] text-white font-extrabold rounded-xl text-sm transition shadow-lg shadow-[#bd3191]/10 cursor-pointer tracking-wider uppercase"
-            >
-              {isJoinMode ? 'Odaya Katıl' : 'Yeni Oda Oluştur'}
-            </button>
-
-            {/* Toggle Modes */}
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setIsJoinMode(!isJoinMode)}
-                className="flex-1 py-2 text-xs font-bold bg-[#181D28]/60 backdrop-blur-md hover:bg-[#1E2533]/60 text-[#bd3191] rounded-xl border border-[#1E2533]/50 transition cursor-pointer"
-              >
-                {isJoinMode ? 'Oda Kurucu Modu' : 'Odaya Katılma Modu'}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (!name.trim()) return alertAction("Lütfen önce adınızı girin!", "Giriş Gerekli 👤");
-                  startSoloMode(name.trim(), selectedAvatar);
-                }}
-                className="flex-1 py-2 text-xs font-bold bg-gradient-to-r from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20 text-emerald-400 rounded-xl border border-emerald-500/20 transition cursor-pointer"
-              >
-                👤 Tek Başıma Oyna
-              </button>
-            </div>
-          </div>
-        </form>
-
-        {/* Room History shortcuts */}
-        {roomHistory.length > 0 && (
-          <div className="mt-8 pt-6 border-t border-[#1E2533]/60">
-            <span className="text-[10px] text-gray-500 font-extrabold block uppercase tracking-wider mb-2.5 text-center">Son Katıldığın Odalar</span>
-            <div className="flex flex-col gap-2 max-h-[140px] overflow-y-auto pr-1">
-              {roomHistory.map((item, idx) => {
-                const code = typeof item === 'object' ? item.code : item;
-                const rName = typeof item === 'object' ? item.name : `Oda #${item}`;
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => {
-                      if (!name.trim()) return alertAction("Lütfen önce adınızı girin!", "Giriş Gerekli 👤");
-                      joinRoom(code, name.trim(), selectedAvatar);
+                {/* Nickname input */}
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-extrabold text-[#9CA3AF] uppercase tracking-wider">Takma Adınız</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      localStorage.setItem('mm_saved_name', e.target.value);
                     }}
-                    className="w-full p-2.5 rounded-xl bg-[#181D28]/60 backdrop-blur-md border border-[#1E2533]/50 hover:bg-[#1E2533]/60/40 text-left transition flex items-center justify-between text-xs font-semibold cursor-pointer"
+                    placeholder="Örn: Burak"
+                    className="w-full px-4.5 py-3 rounded-xl bg-white/[0.02] border border-white/[0.08] text-sm focus:outline-none focus:border-[#5ca4a7] focus:ring-2 focus:ring-[#5ca4a7]/20 text-white transition-all duration-300 font-semibold shadow-inner"
+                  />
+                </div>
+
+                {/* Multiplayer Room Name (If hosting and not joining) */}
+                {!isJoinMode && (
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] font-extrabold text-[#9CA3AF] uppercase tracking-wider">Oda İsmi (Opsiyonel)</label>
+                    <input
+                      type="text"
+                      value={customRoomName}
+                      onChange={(e) => setCustomRoomName(e.target.value)}
+                      placeholder="Örn: Cuma Gecesi Ekibi"
+                      className="w-full px-4.5 py-3 rounded-xl bg-white/[0.02] border border-white/[0.08] text-sm focus:outline-none focus:border-[#5ca4a7] focus:ring-2 focus:ring-[#5ca4a7]/20 text-white transition-all duration-300 font-semibold shadow-inner"
+                    />
+                  </div>
+                )}
+
+                {/* Room Join Code (If join mode is active) */}
+                {isJoinMode && (
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] font-extrabold text-[#9CA3AF] uppercase tracking-wider">Katılım Kodu (Room Code)</label>
+                    <input
+                      type="text"
+                      value={joinCode}
+                      onChange={(e) => setJoinCode(e.target.value)}
+                      placeholder="Örn: 123456"
+                      className="w-full px-4.5 py-3 rounded-xl bg-white/[0.02] border border-white/[0.08] text-sm focus:outline-none focus:border-[#5ca4a7] focus:ring-2 focus:ring-[#5ca4a7]/20 text-white transition-all duration-300 font-mono tracking-widest text-center shadow-inner"
+                    />
+                  </div>
+                )}
+
+                {/* Dynamic submit and trigger button */}
+                <div className="space-y-3.5 pt-2">
+                  <button
+                    type="submit"
+                    className="w-full py-3.5 bg-gradient-to-r from-[#f4ac5c] via-[#ed9954] to-[#ccb494] text-[#050b0c] hover:brightness-110 active:scale-[0.98] font-extrabold rounded-xl text-xs tracking-widest uppercase transition-all duration-300 shadow-[0_0_20px_rgba(244,172,92,0.35)] hover:shadow-[0_0_30px_rgba(244,172,92,0.55)] cursor-pointer"
                   >
-                    <div className="min-w-0">
-                      <span className="text-gray-300 block truncate">{rName}</span>
-                      <span className="text-[9px] text-gray-500 font-mono">Kod: {code}</span>
-                    </div>
-                    <span className="text-[10px] text-[#bd3191] font-bold shrink-0">Hızlı Gir →</span>
+                    {isJoinMode ? 'Odaya Katıl' : 'Yeni Oda Oluştur'}
                   </button>
-                );
-              })}
+
+                  {/* Toggle Modes */}
+                  <div className="flex gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setIsJoinMode(!isJoinMode)}
+                      className="flex-1 py-2.5 text-[10px] tracking-wider uppercase font-extrabold bg-white/[0.02] hover:bg-white/[0.08] text-[#5ca4a7] rounded-xl border border-white/[0.06] hover:border-[#5ca4a7]/30 transition-all duration-300 cursor-pointer"
+                    >
+                      {isJoinMode ? 'Oda Kurucu Modu' : 'Odaya Katılma Modu'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!name.trim()) return alertAction("Lütfen önce adınızı girin!", "Giriş Gerekli 👤");
+                        startSoloMode(name.trim(), selectedAvatar);
+                      }}
+                      className="flex-1 py-2.5 text-[10px] tracking-wider uppercase font-extrabold bg-gradient-to-r from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20 text-emerald-400 rounded-xl border border-emerald-500/20 hover:border-emerald-500/40 transition-all duration-300 cursor-pointer"
+                    >
+                      👤 Tek Başıma Oyna
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              {/* Room History shortcuts */}
+              {roomHistory.length > 0 && (
+                <div className="mt-8 pt-6 border-t border-[#1E2533]/60">
+                  <span className="text-[10px] text-gray-500 font-extrabold block uppercase tracking-wider mb-2.5 text-center">Son Katıldığın Odalar</span>
+                  <div className="flex flex-col gap-2 max-h-[140px] overflow-y-auto pr-1">
+                    {roomHistory.map((item, idx) => {
+                      const code = typeof item === 'object' ? item.code : item;
+                      const rName = typeof item === 'object' ? item.name : `Oda #${item}`;
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            if (!name.trim()) return alertAction("Lütfen önce adınızı girin!", "Giriş Gerekli 👤");
+                            joinRoom(code, name.trim(), selectedAvatar);
+                          }}
+                          className="w-full p-2.5 rounded-xl bg-[#181D28]/60 backdrop-blur-md border border-[#1E2533]/50 hover:bg-[#1E2533]/60/40 text-left transition flex items-center justify-between text-xs font-semibold cursor-pointer"
+                        >
+                          <div className="min-w-0">
+                            <span className="text-gray-300 block truncate">{rName}</span>
+                            <span className="text-[9px] text-gray-500 font-mono">Kod: {code}</span>
+                          </div>
+                          <span className="text-[10px] text-[#5ca4a7] font-bold shrink-0">Hızlı Gir →</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
       </div>
     );
   }
@@ -415,32 +512,32 @@ export default function Lobby({
 
       {/* Left Column: Room Info & Joined Members */}
       <div className="lg:col-span-1 space-y-6">
-        <div className="bg-[#11151E]/60 backdrop-blur-md border border-[#1E2533]/60 p-6 rounded-2xl shadow-xl">
-          <div className="flex justify-between items-center border-b border-[#1E2533]/60 pb-3 mb-4">
-            <h3 className="font-extrabold text-lg text-sky-300">
+        <div className="glass-panel p-6 rounded-[2rem]">
+          <div className="flex justify-between items-center border-b border-white/[0.06] pb-3.5 mb-4">
+            <h3 className="font-extrabold text-base text-transparent bg-gradient-to-r from-[#5ca4a7] to-[#ccb494] bg-clip-text">
               {currentUser.isSolo ? '👤 Solo Oturum' : '👥 Oda Üyeleri'}
             </h3>
-            <span className="bg-sky-500/10 text-[#bd3191] border border-sky-500/20 text-xs px-2.5 py-0.5 rounded-full font-bold">
+            <span className="bg-[#5ca4a7]/15 text-[#5ca4a7] border border-[#5ca4a7]/25 text-xs px-2.5 py-0.5 rounded-full font-bold">
               {members.length} Kişi
             </span>
           </div>
 
           <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
             {members.map((member, idx) => (
-              <div key={idx} className="flex items-center justify-between bg-[#181D28]/60 backdrop-blur-md/50 p-2.5 rounded-xl border border-[#1E2533]/60">
+              <div key={idx} className="flex items-center justify-between bg-white/[0.01] border border-white/[0.04] p-3 rounded-xl">
                 <div className="flex items-center gap-2.5">
-                  <span className="text-xl">{member.avatar}</span>
+                  <Avatar emoji={member.avatar} className="w-6 h-6" />
                   <div>
-                    <span className="font-bold text-sm block truncate max-w-[120px]">{member.name}</span>
-                    <span className="text-[9px] text-gray-500 font-semibold block uppercase">
+                    <span className="font-bold text-sm block truncate max-w-[120px] text-gray-200">{member.name}</span>
+                    <span className="text-[9px] text-gray-500 font-bold block uppercase tracking-wider">
                       {member.isSolo ? 'Solo İzleyici' : (member.isBot ? 'Bot Arkadaş' : (member.isHost ? 'Yönetici' : 'Oyuncu'))}
                     </span>
                   </div>
                 </div>
                 {member.isHost ? (
-                  <span className="text-[10px] bg-sky-500/10 text-[#bd3191] border border-sky-500/20 px-2 py-0.5 rounded-md font-extrabold">👑 Lider</span>
+                  <span className="text-[9px] bg-[#f4ac5c]/15 text-[#f4ac5c] border border-[#f4ac5c]/20 px-2 py-0.5 rounded-md font-extrabold tracking-wider uppercase">👑 Lider</span>
                 ) : (
-                  <span className="text-[10px] bg-gray-800 text-gray-400 border border-gray-700/50 px-2 py-0.5 rounded-md font-semibold">Aktif</span>
+                  <span className="text-[9px] bg-white/[0.04] text-gray-400 border border-white/[0.05] px-2 py-0.5 rounded-md font-extrabold tracking-wider uppercase">Aktif</span>
                 )}
               </div>
             ))}
@@ -448,7 +545,7 @@ export default function Lobby({
 
           {/* Share instructions for guest */}
           {!currentUser.isHost && (
-            <div className="mt-4 p-3 bg-[#181D28]/60 backdrop-blur-md/40 rounded-xl border border-[#1E2533]/50 text-center text-xs text-gray-400">
+            <div className="mt-4 p-3.5 bg-white/[0.01] rounded-xl border border-white/[0.04] text-center text-xs text-gray-500 font-semibold">
               Yöneticinin filtreleri seçip oyunu başlatması bekleniyor...
             </div>
           )}
@@ -456,14 +553,14 @@ export default function Lobby({
 
         {/* Invite Virtual Friends (Bots) - Host Only, NOT in Solo */}
         {currentUser.isHost && !currentUser.isSolo && (
-          <div className="bg-[#11151E]/60 backdrop-blur-md border border-[#1E2533]/60 p-6 rounded-2xl shadow-xl">
-            <h3 className="font-extrabold text-base text-purple-400 border-b border-[#1E2533]/60 pb-3 mb-4 flex items-center gap-1.5">
+          <div className="glass-panel p-6 rounded-[2rem]">
+            <h3 className="font-extrabold text-sm text-[#5ca4a7] border-b border-white/[0.06] pb-3.5 mb-4 flex items-center gap-1.5 uppercase tracking-wider">
               🤖 Yapay Zeka Arkadaşlar
             </h3>
-            <p className="text-[11px] text-gray-400 mb-4">
+            <p className="text-[11px] text-gray-400 font-medium leading-relaxed mb-4">
               Tek başınaysan veya odayı doldurmak istiyorsan, farklı zevklere sahip sanal bot arkadaşları davet et!
             </p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2.5">
               {BOT_PRESETS.map((bot, idx) => {
                 const isAdded = members.some(m => m.name === bot.name);
                 return (
@@ -471,18 +568,18 @@ export default function Lobby({
                     key={idx}
                     onClick={() => addBotFriend(bot)}
                     disabled={isAdded}
-                    className={`p-2.5 rounded-xl border text-left flex flex-col justify-between h-20 transition text-xs font-semibold cursor-pointer ${isAdded
-                      ? 'bg-[#181D28]/60 backdrop-blur-md/50 border-[#1E2533]/50 text-gray-500 opacity-60'
-                      : 'bg-[#181D28]/60 backdrop-blur-md border-purple-500/15 hover:border-purple-500/30 text-gray-200 hover:bg-[#181D28]/60 backdrop-blur-md/80 shadow-md'
+                    className={`p-3 rounded-xl border text-left flex flex-col justify-between h-20 transition-all duration-300 text-xs font-semibold cursor-pointer ${isAdded
+                      ? 'bg-white/[0.01] border-white/[0.04] text-gray-500 opacity-55'
+                      : 'bg-white/[0.02] border-white/[0.06] hover:border-[#5ca4a7]/30 text-gray-200 hover:bg-white/[0.04]'
                       }`}
                   >
                     <div className="flex justify-between items-center w-full">
-                      <span className="truncate max-w-[80px]">{bot.name.split(" ")[0]}</span>
-                      <span>{bot.avatar}</span>
+                      <span className="truncate max-w-[80px] font-bold">{bot.name.split(" ")[0]}</span>
+                      <Avatar emoji={bot.avatar} className="w-5 h-5" />
                     </div>
-                    <span className={`text-[8px] px-1 py-0.5 rounded ${isAdded
-                      ? 'bg-gray-800 text-gray-500'
-                      : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                    <span className={`text-[8px] px-1 py-0.5 rounded font-extrabold uppercase tracking-wider ${isAdded
+                      ? 'bg-white/[0.03] text-gray-500'
+                      : 'bg-[#5ca4a7]/10 text-[#5ca4a7] border border-[#5ca4a7]/15'
                       }`}>
                       {isAdded ? 'Lobide' : 'Davet Et'}
                     </span>
@@ -495,11 +592,11 @@ export default function Lobby({
 
         {/* Mood Picker - Solo Mode Only */}
         {currentUser.isSolo && (
-          <div className="bg-[#11151E]/60 backdrop-blur-md border border-[#1E2533]/60 p-6 rounded-2xl shadow-xl space-y-3">
-            <h3 className="font-extrabold text-base text-purple-400 border-b border-[#1E2533]/60 pb-3 mb-2 flex items-center gap-1.5">
+          <div className="glass-panel p-6 rounded-[2rem] space-y-3">
+            <h3 className="font-extrabold text-sm text-[#5ca4a7] border-b border-white/[0.06] pb-3.5 mb-2 flex items-center gap-1.5 uppercase tracking-wider">
               🎭 Bugün Nasıl Hissediyorsun?
             </h3>
-            <p className="text-[11px] text-gray-400">
+            <p className="text-[11px] text-gray-400 font-medium">
               Ruh halinize uygun film türlerini tek tıkla otomatik ayarlayabilirsiniz:
             </p>
             <div className="flex flex-col gap-2">
@@ -511,13 +608,13 @@ export default function Lobby({
                     type="button"
                     key={idx}
                     onClick={() => handleMoodSelect(mood)}
-                    className={`w-full p-2.5 rounded-xl border text-left text-xs font-bold transition flex items-center justify-between cursor-pointer ${isSelected
-                      ? 'bg-purple-500/10 border-purple-500/35 text-purple-400 shadow-md'
-                      : 'bg-[#181D28]/60 backdrop-blur-md border-[#1E2533]/50 text-gray-300 hover:text-white'
+                    className={`w-full p-3 rounded-xl border text-left text-xs font-extrabold transition-all duration-300 flex items-center justify-between cursor-pointer ${isSelected
+                      ? 'bg-[#5ca4a7]/15 border-[#5ca4a7]/35 text-[#5ca4a7] shadow-md'
+                      : 'bg-white/[0.02] border-white/[0.06] text-gray-300 hover:bg-white/[0.05] hover:text-white'
                       }`}
                   >
                     <span>{mood.name}</span>
-                    {isSelected && <span className="text-[10px] text-purple-400">✨ Seçili</span>}
+                    {isSelected && <span className="text-[9px] font-extrabold text-[#5ca4a7] uppercase tracking-wider">✨ Seçili</span>}
                   </button>
                 );
               })}
@@ -527,11 +624,11 @@ export default function Lobby({
 
         {/* Solo Session Exit Button */}
         {currentUser.isSolo && (
-          <div className="bg-[#11151E]/60 backdrop-blur-md border border-[#1E2533]/60 p-6 rounded-2xl shadow-xl space-y-3">
-            <h3 className="font-extrabold text-base text-red-400 border-b border-[#1E2533]/60 pb-3 mb-2 flex items-center gap-1.5">
+          <div className="glass-panel p-6 rounded-[2rem] space-y-3">
+            <h3 className="font-extrabold text-sm text-red-400 border-b border-white/[0.06] pb-3.5 mb-2 flex items-center gap-1.5 uppercase tracking-wider">
               🚪 Oturumu Sonlandır
             </h3>
-            <p className="text-[11px] text-gray-400">
+            <p className="text-[11px] text-gray-400 font-medium">
               Grup moduna geçmek veya oda oluşturmak için bu oturumu kapatabilirsiniz:
             </p>
             <button
@@ -553,10 +650,10 @@ export default function Lobby({
 
       {/* Middle/Right Columns: Settings & Filters Dashboard */}
       <div className="lg:col-span-2 space-y-6">
-        <div className="bg-[#11151E]/60 backdrop-blur-md border border-[#1E2533]/60 p-6 rounded-2xl shadow-xl">
-          <div className="border-b border-[#1E2533]/60 pb-3 mb-6 flex justify-between items-center">
-            <h3 className="font-extrabold text-lg text-sky-300">Eşleşme Filtreleri</h3>
-            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-sky-500/10 text-[#bd3191] border border-sky-500/20">
+        <div className="glass-panel p-6 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+          <div className="border-b border-white/[0.06] pb-3.5 mb-6 flex justify-between items-center">
+            <h3 className="font-extrabold text-base text-transparent bg-gradient-to-r from-[#5ca4a7] to-[#ccb494] bg-clip-text">Eşleşme Filtreleri</h3>
+            <span className="text-[9px] uppercase font-extrabold px-2 py-0.5 rounded bg-[#5ca4a7]/15 text-[#5ca4a7] border border-[#5ca4a7]/20">
               {currentUser.isHost ? 'Yönetim Sende' : 'Sadece İzle'}
             </span>
           </div>
@@ -571,8 +668,8 @@ export default function Lobby({
                     type="button"
                     onClick={() => setMovieSource('local')}
                     className={`px-3 py-2 rounded-lg text-xs font-bold transition border cursor-pointer ${movieSource === 'local'
-                      ? 'bg-sky-500/10 border-sky-500/35 text-[#bd3191] shadow-md'
-                      : 'bg-[#11151E]/60 backdrop-blur-md text-gray-400 border-[#1E2533]/60 hover:text-white'
+                      ? 'bg-[#5ca4a7]/10 border-[#5ca4a7]/35 text-[#5ca4a7] shadow-md'
+                      : 'bg-white/[0.01] border-white/[0.04] text-gray-400 hover:text-white'
                       }`}
                   >
                     Yerel Kütüphane ({initialMoviesPool.length})
@@ -581,8 +678,8 @@ export default function Lobby({
                     type="button"
                     onClick={() => setMovieSource('tmdb_popular')}
                     className={`px-3 py-2 rounded-lg text-xs font-bold transition border cursor-pointer ${movieSource === 'tmdb_popular'
-                      ? 'bg-purple-500/10 border-purple-500/35 text-purple-400 shadow-md'
-                      : 'bg-[#11151E]/60 backdrop-blur-md text-gray-400 border-[#1E2533]/60 hover:text-white'
+                      ? 'bg-[#5ca4a7]/10 border-[#5ca4a7]/35 text-[#5ca4a7] shadow-md'
+                      : 'bg-white/[0.01] border-white/[0.04] text-gray-400 hover:text-white'
                       }`}
                   >
                     Popüler (TMDb)
@@ -591,8 +688,8 @@ export default function Lobby({
                     type="button"
                     onClick={() => setMovieSource('tmdb_top_rated')}
                     className={`px-3 py-2 rounded-lg text-xs font-bold transition border cursor-pointer ${movieSource === 'tmdb_top_rated'
-                      ? 'bg-amber-500/10 border-amber-500/35 text-amber-400 shadow-md'
-                      : 'bg-[#11151E]/60 backdrop-blur-md text-gray-400 border-[#1E2533]/60 hover:text-white'
+                      ? 'bg-[#f4ac5c]/10 border-[#f4ac5c]/35 text-[#f4ac5c] shadow-md'
+                      : 'bg-white/[0.01] border-white/[0.04] text-gray-400 hover:text-white'
                       }`}
                   >
                     🌟 En İyiler (TMDb)
@@ -601,8 +698,8 @@ export default function Lobby({
                     type="button"
                     onClick={() => setMovieSource('tmdb_now_playing')}
                     className={`px-3 py-2 rounded-lg text-xs font-bold transition border cursor-pointer ${movieSource === 'tmdb_now_playing'
-                      ? 'bg-pink-500/10 border-pink-500/35 text-pink-400 shadow-md'
-                      : 'bg-[#11151E]/60 backdrop-blur-md text-gray-400 border-[#1E2533]/60 hover:text-white'
+                      ? 'bg-[#5ca4a7]/10 border-[#5ca4a7]/35 text-[#5ca4a7] shadow-md'
+                      : 'bg-white/[0.01] border-white/[0.04] text-gray-400 hover:text-white'
                       }`}
                   >
                     🎭 Vizyondakiler (TMDb)
@@ -623,8 +720,8 @@ export default function Lobby({
                       onClick={() => handleGenreToggle(genre)}
                       disabled={!currentUser.isHost}
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition border cursor-pointer ${isSelected
-                        ? 'bg-sky-500/10 text-[#bd3191] border-sky-500/35 shadow-md shadow-sky-500/5'
-                        : 'bg-[#181D28]/60 backdrop-blur-md text-gray-400 border-[#1E2533]/50 hover:text-white'
+                        ? 'bg-[#5ca4a7]/15 text-[#5ca4a7] border-[#5ca4a7]/35 shadow-md shadow-[#5ca4a7]/5'
+                        : 'bg-white/[0.01] border-white/[0.04] text-gray-400 hover:text-white'
                         }`}
                     >
                       {genre}
@@ -646,8 +743,8 @@ export default function Lobby({
                       onClick={() => handlePlatformToggle(platform)}
                       disabled={!currentUser.isHost}
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition border cursor-pointer ${isSelected
-                        ? 'bg-purple-500/10 text-purple-400 border-purple-500/35 shadow-md shadow-purple-500/5'
-                        : 'bg-[#181D28]/60 backdrop-blur-md text-gray-400 border-[#1E2533]/50 hover:text-white'
+                        ? 'bg-[#5ca4a7]/15 text-[#5ca4a7] border-[#5ca4a7]/35 shadow-md shadow-[#5ca4a7]/5'
+                        : 'bg-white/[0.01] border-white/[0.04] text-gray-400 hover:text-white'
                         }`}
                     >
                       {platform}
@@ -672,7 +769,7 @@ export default function Lobby({
                   value={filters.minRating || 0}
                   disabled={!currentUser.isHost}
                   onChange={(e) => updateFilters({ ...filters, minRating: parseFloat(e.target.value) })}
-                  className="w-full h-1.5 bg-[#181D28]/60 backdrop-blur-md rounded-lg appearance-none cursor-pointer accent-[#bd3191] focus:outline-none"
+                  className="w-full h-1.5 bg-white/[0.02] border border-white/[0.06] rounded-lg appearance-none cursor-pointer accent-[#5ca4a7] focus:outline-none"
                 />
                 <div className="flex justify-between text-[10px] text-gray-600 mt-1">
                   <span>Puan Seçilmedi</span>
@@ -693,7 +790,7 @@ export default function Lobby({
                   value={filters.maxDuration || 240}
                   disabled={!currentUser.isHost}
                   onChange={(e) => updateFilters({ ...filters, maxDuration: parseInt(e.target.value) })}
-                  className="w-full h-1.5 bg-[#181D28]/60 backdrop-blur-md rounded-lg appearance-none cursor-pointer accent-[#bd3191] focus:outline-none"
+                  className="w-full h-1.5 bg-white/[0.02] border border-white/[0.06] rounded-lg appearance-none cursor-pointer accent-[#5ca4a7] focus:outline-none"
                 />
                 <div className="flex justify-between text-[10px] text-gray-600 mt-1">
                   <span>80 Dk</span>
@@ -714,7 +811,7 @@ export default function Lobby({
                   value={filters.maxMovieCount || 20}
                   disabled={!currentUser.isHost}
                   onChange={(e) => updateFilters({ ...filters, maxMovieCount: parseInt(e.target.value) })}
-                  className="w-full h-1.5 bg-[#181D28]/60 backdrop-blur-md rounded-lg appearance-none cursor-pointer accent-[#bd3191] focus:outline-none"
+                  className="w-full h-1.5 bg-white/[0.02] border border-white/[0.06] rounded-lg appearance-none cursor-pointer accent-[#5ca4a7] focus:outline-none"
                 />
                 <div className="flex justify-between text-[10px] text-gray-600 mt-1">
                   <span>5</span>
@@ -732,7 +829,7 @@ export default function Lobby({
                 value={filters.language || ''}
                 disabled={!currentUser.isHost}
                 onChange={(e) => updateFilters({ ...filters, language: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-[#181D28]/60 backdrop-blur-md border border-[#1E2533]/60 text-sm focus:outline-none focus:border-[#bd3191]/50 focus:ring-1 focus:ring-[#bd3191]/20 transition text-gray-300"
+                className="w-full px-3 py-2 rounded-xl bg-white/[0.02] border border-white/[0.08] text-sm focus:outline-none focus:border-[#5ca4a7] focus:ring-1 focus:ring-[#5ca4a7]/20 transition text-gray-300"
               >
                 <option value="">Fark Etmez (Tüm Diller)</option>
                 {LANGUAGES.map(l => (
@@ -743,7 +840,7 @@ export default function Lobby({
           </div>
 
           {/* Game Stats & Launch Section */}
-          <div className="mt-8 border-t border-[#1E2533]/60 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 bg-[#181D28]/60 backdrop-blur-md/30 -mx-6 -mb-6 p-6 rounded-b-2xl">
+          <div className="mt-8 border-t border-white/[0.06] pt-6 flex flex-col md:flex-row items-center justify-between gap-4 bg-white/[0.01] -mx-6 -mb-6 p-6 rounded-b-2xl">
             <div className="text-center md:text-left">
               <span className="text-xs text-gray-500 font-bold block uppercase tracking-wider">Aktif Eşleşecek Film Sayısı</span>
               <span className="text-2xl font-black text-emerald-400">
@@ -759,8 +856,8 @@ export default function Lobby({
                 onClick={handleStartGameClick}
                 disabled={fetchingTmdb || (movieSource === 'local' && matchedCount === 0)}
                 className={`w-full md:w-auto font-black px-8 py-3 rounded-xl shadow-lg transition tracking-wide text-sm cursor-pointer ${(movieSource === 'local' && matchedCount === 0)
-                  ? 'bg-gray-800 text-gray-500 border border-[#1E2533]/60 cursor-not-allowed shadow-none'
-                  : 'bg-gradient-to-r from-[#bd3191] via-[#7d0d5a] to-[#490a35] hover:from-[#bd3191]/95 hover:via-[#7d0d5a]/95 hover:to-[#490a35]/95 shadow-[0_4px_20px_rgba(189,49,145,0.2)] text-white shadow-[#bd3191]/10'
+                  ? 'bg-gray-800 text-gray-500 border border-white/[0.06] cursor-not-allowed shadow-none'
+                  : 'bg-gradient-to-r from-[#f4ac5c] via-[#ed9954] to-[#ccb494] text-[#050b0c] shadow-[0_4px_20px_rgba(244,172,92,0.3)] shadow-[#f4ac5c]/10'
                   }`}
               >
                 {fetchingTmdb ? 'Yükleniyor...' : (currentUser.isSolo ? 'Önerileri Getir!' : 'Eşleşmeyi Başlat!')}

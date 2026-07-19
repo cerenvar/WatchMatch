@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Heart, X as XIcon, Minus } from 'lucide-react';
-
 import SwipeCard from '../components/SwipeCard';
 import { HandHeart, Info } from 'lucide-react';
+import Avatar from '../components/Avatar';
 
 export default function SwipeArena({ roomMovies: movies, submitVote: onVote, votes, currentUser, setPage }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -13,11 +13,11 @@ export default function SwipeArena({ roomMovies: movies, submitVote: onVote, vot
   useEffect(() => {
     const prevVotes = prevVotesRef.current;
     let newActivities = [];
-    
+
     Object.keys(votes).forEach(userName => {
       const userVotes = votes[userName] || {};
       const prevUserVotes = prevVotes[userName] || {};
-      
+
       Object.keys(userVotes).forEach(movieId => {
         if (!prevUserVotes[movieId]) {
           // New vote found!
@@ -35,7 +35,7 @@ export default function SwipeArena({ roomMovies: movies, submitVote: onVote, vot
 
     if (newActivities.length > 0) {
       setActivities(prev => [...prev, ...newActivities].slice(-5)); // Keep only last 5
-      
+
       // Auto remove after 4 seconds
       newActivities.forEach(activity => {
         setTimeout(() => {
@@ -43,7 +43,7 @@ export default function SwipeArena({ roomMovies: movies, submitVote: onVote, vot
         }, 4000);
       });
     }
-    
+
     prevVotesRef.current = votes;
   }, [votes, currentUser]);
 
@@ -57,9 +57,9 @@ export default function SwipeArena({ roomMovies: movies, submitVote: onVote, vot
     onVote(movieId, vote);
     setCurrentIndex(prev => prev + 1);
   };
-  
+
   const safeMovies = movies || [];
-  
+
   if (safeMovies.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in text-center px-4">
@@ -88,7 +88,7 @@ export default function SwipeArena({ roomMovies: movies, submitVote: onVote, vot
         </p>
         <button
           onClick={() => setPage && setPage('results')}
-          className="bg-[#bd3191] hover:bg-[#7d0d5a] text-white font-bold py-3 px-8 rounded-xl transition shadow-lg hover:shadow-[#bd3191]/50"
+          className="glass-btn-primary py-3 px-8 rounded-xl transition cursor-pointer font-black text-sm uppercase tracking-wider"
         >
           Sonuçları Gör
         </button>
@@ -103,8 +103,8 @@ export default function SwipeArena({ roomMovies: movies, submitVote: onVote, vot
       {/* Progress Bar & Header */}
       <div className="flex items-center justify-between mb-4 gap-6 shrink-0 mt-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-[#bd3191]/10 flex items-center justify-center border border-[#bd3191]/20 shadow-lg">
-            <span className="text-xl">{currentUser?.avatar}</span>
+          <div className="w-12 h-12 rounded-full bg-[#5ca4a7]/10 flex items-center justify-center border border-[#5ca4a7]/20 shadow-lg">
+            <Avatar emoji={currentUser?.avatar} className="w-6 h-6" />
           </div>
           <div>
             <div className="text-sm font-bold text-[#F5F7FA]">{currentUser?.name}</div>
@@ -117,9 +117,9 @@ export default function SwipeArena({ roomMovies: movies, submitVote: onVote, vot
             <span>İlerleme</span>
             <span>{currentIndex} / {safeMovies.length}</span>
           </div>
-          <div className="h-2.5 bg-[#11151E] rounded-full overflow-hidden border border-[#1E2533] shadow-inner">
+          <div className="h-2.5 bg-white/[0.01] border border-white/[0.06] rounded-full overflow-hidden shadow-inner">
             <div
-              className="h-full bg-gradient-to-r from-[#bd3191] to-[#7d0d5a] transition-all duration-500 ease-out rounded-full"
+              className="h-full bg-gradient-to-r from-[#5ca4a7] to-[#f4ac5c] transition-all duration-500 ease-out rounded-full shadow-[0_0_10px_rgba(92,164,167,0.5)]"
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
@@ -143,7 +143,7 @@ export default function SwipeArena({ roomMovies: movies, submitVote: onVote, vot
       <div className="text-center mt-6 mb-4 text-xs font-semibold text-[#4B5563] shrink-0 flex items-center justify-center gap-2">
         <Info className="w-4 h-4" /> Kartları sürükleyerek veya butonları kullanarak oy verebilirsiniz.
       </div>
-    
+
       {/* Activity Feed / Emoji Chat */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none">
         {activities.map((act) => (

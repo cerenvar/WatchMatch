@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import MatchWheel from '../components/MatchWheel';
 import { Star, Trophy, Users, Minus, X, Info } from 'lucide-react';
+import Avatar from '../components/Avatar';
 
-export default function Results({ roomMovies, votes, members }) {
+export default function Results({ roomMovies, votes, members, setPage, leaveRoom, confirmAction, currentUser, resetGame }) {
   const [selectedMovie, setSelectedMovie] = useState(null);
 
   const calculateMatches = () => {
@@ -54,7 +55,7 @@ export default function Results({ roomMovies, votes, members }) {
         <div className="flex flex-wrap gap-2">
           {users.map((u, i) => (
             <div key={i} className="flex items-center gap-1.5 bg-[#181D28] px-2.5 py-1.5 rounded-lg border border-[#1E2533]">
-              <span className="text-sm">{u.avatar}</span>
+              <Avatar emoji={u.avatar} className="w-4 h-4" />
               <span className="text-xs font-semibold text-[#F5F7FA]">{u.name}</span>
             </div>
           ))}
@@ -67,8 +68,8 @@ export default function Results({ roomMovies, votes, members }) {
     <div className="max-w-6xl mx-auto py-8 animate-fade-in px-4">
       <div className="text-center mb-10">
         <h2 className="text-3xl font-black text-[#F5F7FA] tracking-tight mb-3">Oylama Sonuçları</h2>
-        <p className="text-base text-[#9CA3AF] font-medium flex items-center justify-center gap-2">
-          <Users className="w-5 h-5 text-[#bd3191]" /> {members.length} kişinin oyları hesaplandı
+        <p className="text-base text-[#ccb494] font-medium flex items-center justify-center gap-2">
+          <Users className="w-5 h-5 text-[#5ca4a7]" /> {members.length} kişinin oyları hesaplandı
         </p>
       </div>
 
@@ -94,7 +95,7 @@ export default function Results({ roomMovies, votes, members }) {
                 <div className="flex-1">
                   <h4 className="text-2xl font-black text-[#F5F7FA] mb-2 leading-tight">{bestMatch.title}</h4>
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="bg-[#bd3191]/10 text-[#bd3191] text-xs font-bold px-2.5 py-1 rounded-md">{bestMatch.genre}</span>
+                    <span className="bg-[#5ca4a7]/10 text-[#5ca4a7] text-xs font-bold px-2.5 py-1 rounded-md">{bestMatch.genre}</span>
                     <span className="bg-[#F59E0B]/10 text-[#F59E0B] text-xs font-bold px-2.5 py-1 rounded-md flex items-center gap-1"><Star className="w-3.5 h-3.5" /> {bestMatch.rating}</span>
                   </div>
                   <div className="flex items-end gap-2">
@@ -113,8 +114,8 @@ export default function Results({ roomMovies, votes, members }) {
           </div>
 
           {/* Wheel Selector */}
-          <div className="bg-[#11151E] rounded-3xl border border-[#1E2533] p-8 shadow-xl flex flex-col items-center justify-center relative">
-             <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-[#bd3191]/10 blur-[80px] rounded-full pointer-events-none" />
+          <div className="glass-panel rounded-3xl p-8 shadow-xl flex flex-col items-center justify-center relative">
+             <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-[#5ca4a7]/10 blur-[80px] rounded-full pointer-events-none" />
              <div className="text-center mb-6 z-10">
                <h3 className="text-xl font-black text-[#F5F7FA] mb-2">Kararsız Mısınız?</h3>
                <p className="text-sm text-[#9CA3AF] font-medium">İlk 10 film arasından rastgele birini seçmek için çarkı çevirin.</p>
@@ -140,8 +141,8 @@ export default function Results({ roomMovies, votes, members }) {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {topMatches.slice(1).map((movie, index) => (
-              <div key={movie.id} className="flex items-center gap-4 bg-[#181D28] border border-[#1E2533] p-4 rounded-2xl hover:border-[#bd3191]/50 transition group cursor-pointer" onClick={() => setSelectedMovie(movie)}>
-                <div className="w-10 h-10 rounded-xl bg-[#11151E] border border-[#1E2533] flex items-center justify-center font-black text-lg text-[#9CA3AF] group-hover:text-[#bd3191] transition">
+              <div key={movie.id} className="flex items-center gap-4 bg-[#181D28] border border-[#1E2533] p-4 rounded-2xl hover:border-[#5ca4a7]/50 transition group cursor-pointer" onClick={() => setSelectedMovie(movie)}>
+                <div className="w-10 h-10 rounded-xl bg-[#11151E] border border-[#1E2533] flex items-center justify-center font-black text-lg text-[#ccb494] group-hover:text-[#5ca4a7] transition">
                   {index + 2}
                 </div>
                 <img src={movie.poster} alt={movie.title} className="w-12 h-16 object-cover rounded-lg" />
@@ -187,6 +188,33 @@ export default function Results({ roomMovies, votes, members }) {
            </div>
         </div>
       )}
+
+      {/* Reset & Back Buttons */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-12 pt-6 border-t border-white/[0.06]">
+        {currentUser?.isHost ? (
+          <button
+            onClick={() => confirmAction("Tüm oyları sıfırlayıp lobiye dönmek ve yeni oylama başlatmak istiyor musunuz?", resetGame, "Oylamayı Sıfırla")}
+            className="px-8 py-4 rounded-2xl glass-btn-primary font-black text-sm uppercase tracking-wider flex items-center gap-2 cursor-pointer shadow-lg w-full sm:w-auto justify-center"
+          >
+            🔄 Oylamayı Sıfırla ve Lobiye Dön
+          </button>
+        ) : (
+          <button
+            onClick={() => setPage('lobby')}
+            className="px-8 py-4 rounded-2xl glass-btn-secondary font-black text-sm uppercase tracking-wider flex items-center gap-2 cursor-pointer w-full sm:w-auto justify-center"
+          >
+            🏠 Lobiye Geri Dön
+          </button>
+        )}
+
+        <button
+          onClick={() => confirmAction("Odadan ayrılmak istediğinize emin misiniz?", leaveRoom, "Odadan Ayrıl")}
+          className="px-8 py-4 rounded-2xl bg-transparent border border-[#EF4444]/30 hover:bg-[#EF4444]/10 hover:border-[#EF4444]/50 text-[#EF4444] font-black text-sm uppercase tracking-wider flex items-center gap-2 transition cursor-pointer w-full sm:w-auto justify-center"
+        >
+          🚪 Odadan Ayrıl
+        </button>
+      </div>
+
     </div>
   );
 }

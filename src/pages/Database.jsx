@@ -37,7 +37,7 @@ export default function Database({ movies, onSubmitMovie, onDeleteMovie, editing
                 fetchFromTmdb();
               }
             }}
-            className="bg-[#1E2533] hover:bg-[#283142] text-[#F5F7FA] border border-[#283142] px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 shadow-lg cursor-pointer"
+            className="px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-300 bg-white/[0.02] border border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.15] text-[#F5F7FA] shadow-md cursor-pointer"
           >
             TMDb'den Film Çek
           </button>
@@ -50,53 +50,53 @@ export default function Database({ movies, onSubmitMovie, onDeleteMovie, editing
                 resetToDefaults();
               }
             }}
-            className="bg-[#EF4444]/10 hover:bg-[#EF4444]/20 text-[#EF4444] border border-[#EF4444]/20 px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 shadow-lg cursor-pointer"
+            className="px-4 py-2.5 rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all duration-300 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/35 shadow-md cursor-pointer"
           >
             Sıfırla
           </button>
 
           <button
             onClick={() => document.getElementById('add-movie-form')?.scrollIntoView({ behavior: 'smooth' })}
-            className="bg-[#bd3191] hover:bg-[#7d0d5a] text-white px-5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 shadow-lg shadow-[#bd3191]/20 cursor-pointer"
+            className="glass-btn-primary px-5 py-2.5 rounded-xl text-xs font-extrabold tracking-wider uppercase transition-all duration-300 flex items-center gap-2 cursor-pointer"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
             Yeni Film Ekle
           </button>
         </div>
       </div>
 
-      <div className="bg-[#11151E]/60 backdrop-blur-md border border-[#bd3191]/15 p-4 rounded-2xl mb-8 flex flex-col md:flex-row gap-4 shadow-2xl">
+      <div className="glass-panel-glow p-4.5 rounded-3xl mb-8 flex flex-col md:flex-row gap-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
         <div className="flex-1 relative">
-          <Search className="w-5 h-5 text-[#4B5563] absolute left-4 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-gray-500 absolute left-4 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Film adı ile ara..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-[#11151E]/40 border border-[#1E2533]/60 rounded-xl focus:outline-none focus:border-[#bd3191] focus:ring-1 focus:ring-[#bd3191]/20 text-[#F5F7FA] placeholder-[#4B5563] transition text-sm"
+            className="w-full pl-11 pr-4 py-3 bg-white/[0.02] border border-white/[0.08] focus:border-[#5ca4a7] focus:ring-2 focus:ring-[#5ca4a7]/20 rounded-xl outline-none text-[#F5F7FA] placeholder-gray-500 transition-all duration-300 text-sm font-semibold shadow-inner"
           />
         </div>
         
         <div className="flex gap-4">
           <div className="relative">
-            <Filter className="w-4 h-4 text-[#4B5563] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Filter className="w-3.5 h-3.5 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <select
               value={filterPlatform}
               onChange={(e) => setFilterPlatform(e.target.value)}
-              className="pl-9 pr-8 py-3 bg-[#11151E]/40 border border-[#1E2533]/60 rounded-xl focus:outline-none focus:border-[#bd3191] focus:ring-1 focus:ring-[#bd3191]/20 text-[#F5F7FA] appearance-none cursor-pointer transition text-sm font-medium min-w-[140px]"
+              className="pl-9 pr-8 py-3 bg-white/[0.02] border border-white/[0.08] rounded-xl focus:border-[#5ca4a7] focus:ring-2 focus:ring-[#5ca4a7]/20 text-[#F5F7FA] appearance-none cursor-pointer transition-all duration-300 text-sm font-semibold min-w-[160px] shadow-inner"
             >
-              {platforms.map(p => <option key={p} value={p} className="bg-[#181D28] text-white">{p === 'All' ? 'Tüm Platformlar' : p}</option>)}
+              {platforms.map(p => <option key={p} value={p} className="bg-[#090B10] text-[#F5F7FA]">{p === 'All' ? 'Tüm Platformlar' : p}</option>)}
             </select>
           </div>
 
           <div className="relative">
-            <Filter className="w-4 h-4 text-[#4B5563] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Filter className="w-3.5 h-3.5 text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <select
               value={filterGenre}
               onChange={(e) => setFilterGenre(e.target.value)}
-              className="pl-9 pr-8 py-3 bg-[#11151E]/40 border border-[#1E2533]/60 rounded-xl focus:outline-none focus:border-[#bd3191] focus:ring-1 focus:ring-[#bd3191]/20 text-[#F5F7FA] appearance-none cursor-pointer transition text-sm font-medium min-w-[140px]"
+              className="pl-9 pr-8 py-3 bg-white/[0.02] border border-white/[0.08] rounded-xl focus:border-[#5ca4a7] focus:ring-2 focus:ring-[#5ca4a7]/20 text-[#F5F7FA] appearance-none cursor-pointer transition-all duration-300 text-sm font-semibold min-w-[140px] shadow-inner"
             >
-              {genres.map(g => <option key={g} value={g} className="bg-[#181D28] text-white">{g === 'All' ? 'Tüm Türler' : g}</option>)}
+              {genres.map(g => <option key={g} value={g} className="bg-[#090B10] text-[#F5F7FA]">{g === 'All' ? 'Tüm Türler' : g}</option>)}
             </select>
           </div>
         </div>
@@ -108,7 +108,7 @@ export default function Database({ movies, onSubmitMovie, onDeleteMovie, editing
           <p className="text-lg text-[#9CA3AF] font-medium">Arama kriterlerine uygun film bulunamadı.</p>
           <button
             onClick={() => { setSearchTerm(''); setFilterPlatform('All'); setFilterGenre('All'); }}
-            className="mt-4 text-[#bd3191] font-bold hover:underline"
+            className="mt-4 text-[#5ca4a7] font-bold hover:underline"
           >
             Filtreleri Temizle
           </button>
@@ -130,9 +130,9 @@ export default function Database({ movies, onSubmitMovie, onDeleteMovie, editing
       )}
       
       {/* Movie Form */}
-      <div id="add-movie-form" className="mt-12 bg-[#11151E]/60 backdrop-blur-md border border-[#bd3191]/15 p-6 md:p-8 rounded-3xl shadow-2xl">
+      <div id="add-movie-form" className="mt-12 glass-panel p-6 md:p-8 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
         <h3 className="text-xl font-black text-[#F5F7FA] mb-6 flex items-center gap-2">
-          <Plus className="w-6 h-6 text-[#bd3191]" /> 
+          <Plus className="w-6 h-6 text-[#5ca4a7]" /> 
           {editingMovie ? 'Filmi Düzenle' : 'Yeni Film Ekle'}
         </h3>
         <MovieForm 

@@ -100,10 +100,14 @@ export default function useRoomSync(initialMoviesPool, setPage) {
     };
   }, []);
 
-  // Auto-navigate to Swiper when game starts via DB update
+  // Auto-navigate to Swiper or back to Lobby when game starts or resets
   useEffect(() => {
-    if (gameStarted && roomId && roomId !== 'solo') {
-      setPage('swiper');
+    if (roomId && roomId !== 'solo') {
+      if (gameStarted) {
+        setPage('swiper');
+      } else {
+        setPage('lobby');
+      }
     }
   }, [gameStarted, roomId, setPage]);
 
@@ -120,13 +124,15 @@ export default function useRoomSync(initialMoviesPool, setPage) {
     localStorage.setItem('mm_saved_color_idx', localStorage.getItem('mm_saved_color_idx') || '0');
 
     if (targetRoomId && targetRoomId !== 'solo') {
-      const history = JSON.parse(localStorage.getItem('mm_room_history') || '[]');
+      const uid = auth.currentUser?.uid || 'guest';
+      const key = `mm_room_history_${uid}`;
+      const history = JSON.parse(localStorage.getItem(key) || '[]');
       const newEntry = { code: targetRoomId, name: targetRoomName || `Oda #${targetRoomId}` };
       const updatedHistory = [newEntry, ...history.filter(r => {
         const existingCode = typeof r === 'object' ? r.code : r;
         return existingCode !== targetRoomId;
       })].slice(0, 4);
-      localStorage.setItem('mm_room_history', JSON.stringify(updatedHistory));
+      localStorage.setItem(key, JSON.stringify(updatedHistory));
     }
   };
 
@@ -335,9 +341,37 @@ export default function useRoomSync(initialMoviesPool, setPage) {
     }
   };
 
+  const resetGame = async () => {
+    if (roomId === 'solo') {
+      setGameStarted(false);
+      setRoomMovies([]);
+      setVotes({ [currentUser?.name || 'user']: {} });
+      setPage('lobby');
+      return;
+    }
+
+    if (!currentUser?.isHost) return;
+
+    try {
+      const updates = {
+        gameStarted: false,
+        roomMovies: [],
+        votes: {}
+      };
+      members.forEach(member => {
+        updates[`votes.${member.name}`] = {};
+      });
+
+      await updateDoc(doc(db, 'rooms', roomId), updates);
+      setPage('lobby');
+    } catch (e) {
+      console.error("Error resetting game:", e);
+    }
+  };
+
 
   return {
     roomId, roomName, currentUser, members, filters, roomMovies, votes, gameStarted,
-    createRoom, joinRoom, startSoloMode, addBotFriend, updateFilters, startGame, submitVote, leaveRoom
+    createRoom, joinRoom, startSoloMode, addBotFriend, updateFilters, startGame, submitVote, leaveRoom, resetGame
   };
 }
